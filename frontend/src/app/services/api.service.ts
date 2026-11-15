@@ -36,6 +36,7 @@ export interface Alerte {
 export interface ReponseAssistant {
   reponse: string;
   mode: string;
+  engine?: string;
   id_message: string;
 }
 export interface Urgence {
@@ -48,6 +49,7 @@ export interface Urgence {
 export interface ResumeEquipage {
   resume: string;
   mode: string;
+  engine?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -111,6 +113,10 @@ export class ApiService {
 
     genererResumeEquipage(): Observable<ResumeEquipage> {
     return this.http.post<ResumeEquipage>(this.adresse + '/assistant/resume-equipage', {});
+  }
+
+  getStatutAssistant(): Observable<any> {
+    return this.http.get<any>(this.adresse + '/assistant/status');
   }
 
   lancerScenario(nom: 'nominal' | 'hypoxia' | 'solar_storm' | string, idAstronaute = 1): Observable<any> {

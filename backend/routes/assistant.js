@@ -5,18 +5,16 @@ import db from '../config/db.js';
 const router = express.Router();
 
 const SYSTEM_PROMPT =
-  "You are the health assistant of the Sila space health monitoring application. " +
-  "All alert levels and normal ranges are calculated deterministically by the Sila rule engine. " +
-  "Your role is strictly explanatory: you only explain the measurements and alerts provided in your context. " +
-  "You never give a medical diagnosis, never invent or calculate thresholds, and never prescribe treatment. " +
-  "In accordance with space privacy rule BNF11, no personal or nominative data is ever shared with you. " +
-  "Keep answers short (3 or 4 sentences) and calm. Suggest simple safe operational countermeasures (rest, re-measure, " +
-  "hydrate, shield protection). For a critical alert, instruct the astronaut to contact the ground doctor immediately. " +
-  "If asked about topics unrelated to astronaut health telemetry, decline politely and focus solely on the telemetry and alerts. " +
-  "Answer in the language of the question.";
+  "Tu es l'assistant médical embarqué de SahtHealth (Sila) à bord d'un vaisseau spatial. " +
+  "Les seuils critiques et alertes sont déjà calculés par notre moteur déterministe auditable : " +
+  "ne pose jamais de diagnostic médical autonome et n'invente aucune valeur. " +
+  "Explique clairement et calmement à l'astronaute la signification de ses constantes actuelles au regard des 5 dangers spatiaux de la NASA " +
+  "(Radiation, Gravité, Isolement, Distance, Environnement clos) et donne des conseils pratiques et préventifs en 3 à 4 phrases maximum. " +
+  "Conformément à la règle de confidentialité spatiale BNF11, aucune donnée nominative ne vous est transmise (sujet anonymisé : Astronaute #1). " +
+  "Réponds dans la langue de la question (français ou anglais).";
 
 const SYSTEM_PROMPT_EQUIPAGE =
-  "You are the medical operations assistant for the Sila spaceflight mission monitoring system. " +
+  "You are the medical operations assistant for the Sila (SahtHealth) spaceflight mission monitoring system. " +
   "All telemetry thresholds and alerts are computed deterministically by the Sila medical engine. " +
   "Provide a concise, factual crew health summary in 4 to 6 sentences for the flight surgeon. " +
   "Report critical alerts first, followed by attention alerts and nominal parameters. " +
@@ -35,6 +33,57 @@ function queryAsync(sql, params = []) {
       resolve(results);
     });
   });
+}
+
+/**
+ * Calls local Ollama Small Language Model (SLM) running offline on the spacecraft node.
+ * Uses native fetch with configurable timeout and AbortController.
+ */
+export async function appelerOllama(prompt, systemPrompt) {
+  const baseUrl = process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434';
+  const model = process.env.OLLAMA_MODEL || 'gemma2:2b';
+  const timeoutMs = parseInt(process.env.OLLAMA_TIMEOUT_MS, 10) || 8000;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const targetUrl = `${baseUrl.replace(/\/+$/, '')}/api/generate`;
+    const response = await fetch(targetUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model,
+        prompt,
+        system: systemPrompt,
+        stream: false,
+        options: {
+          temperature: 0.3
+        }
+      }),
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      throw new Error(`Ollama returned status ${response.status}: ${errText}`);
+    }
+
+    const data = await response.json();
+    const content = data?.response;
+    if (!content || !content.trim()) {
+      throw new Error('Empty response from Ollama service');
+    }
+
+    return {
+      text: content.trim(),
+      model
+    };
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 /**
@@ -92,33 +141,34 @@ export async function appelerIA(messages) {
 
 /**
  * Builds the prompt context according to rule BNF11:
+ * STRICT ANONYMIZATION: Zero nominative or personal identity data (no name, email, age).
  * ONLY vital signs (code, value, secondary value, unit, normal range, timestamp),
  * active alerts (level, message, timestamp), and recent trends for alerted parameters (last 5 values).
- * NEVER includes name, email, age, or any personal identifying info.
  */
-function construireContexte(mesures, alertes, historiqueParametresAlerte = {}) {
-  let context = 'VITAL SIGNS MEASUREMENTS (Latest values & normal ranges):\n';
+function construireContexte(idAstronaute, mesures, alertes, historiqueParametresAlerte = {}) {
+  let context = `SUJET BIOMÉTRIQUE : Astronaute #${idAstronaute || 1} (Anonymisation stricte BNF11)\n`;
+  context += 'MESURES DES CONSTANTES VITALES (Dernières valeurs et plages normales) :\n';
   if (mesures.length === 0) {
-    context += 'No recent measurements recorded.\n';
+    context += 'Aucune mesure récente enregistrée.\n';
   } else {
     for (const m of mesures) {
       const dateStr = m.horodatage ? new Date(m.horodatage).toISOString().replace('T', ' ').slice(0, 19) : 'N/A';
       const secVal = m.valeur_secondaire != null ? ` / ${m.valeur_secondaire}` : '';
       const unit = m.unite ? ` ${m.unite}` : '';
       const normalRange = (m.plage_normale_min != null && m.plage_normale_max != null)
-        ? ` [Normal range: ${m.plage_normale_min} - ${m.plage_normale_max}${unit}]`
+        ? ` [Plage normale: ${m.plage_normale_min} - ${m.plage_normale_max}${unit}]`
         : '';
-      context += `- ${m.code} (${m.libelle || m.code}): ${m.valeur}${secVal}${unit}${normalRange} recorded at ${dateStr}\n`;
+      context += `- ${m.code} (${m.libelle || m.code}): ${m.valeur}${secVal}${unit}${normalRange} enregistré à ${dateStr}\n`;
     }
   }
 
-  context += '\nACTIVE ALERTS:\n';
+  context += '\nALERTES ACTIVES CALCULÉES PAR LE MOTEUR DÉTERMINISTE :\n';
   if (alertes.length === 0) {
-    context += 'None. All monitored parameters are currently nominal.\n';
+    context += 'Aucune alerte. Tous les paramètres surveillés sont nominaux (au vert).\n';
   } else {
     for (const a of alertes) {
       const dateStr = a.date_creation ? new Date(a.date_creation).toISOString().replace('T', ' ').slice(0, 19) : 'N/A';
-      context += `- [${a.niveau.toUpperCase()}] ${a.message} (${dateStr})\n`;
+      context += `- [${(a.niveau || 'info').toUpperCase()}] ${a.message} (${dateStr})\n`;
 
       const paramCode = a.code_parametre;
       if (paramCode && historiqueParametresAlerte[paramCode] && historiqueParametresAlerte[paramCode].length > 0) {
@@ -127,9 +177,9 @@ function construireContexte(mesures, alertes, historiqueParametresAlerte = {}) {
         const histStr = hist.map(h => {
           const t = h.horodatage ? new Date(h.horodatage).toISOString().replace('T', ' ').slice(11, 19) : '';
           const sec = h.valeur_secondaire != null ? `/${h.valeur_secondaire}` : '';
-          return `${h.valeur}${sec}${unit} at ${t}`;
+          return `${h.valeur}${sec}${unit} à ${t}`;
         }).join(' -> ');
-        context += `  Recent trend for ${paramCode} (last ${hist.length} values, chronological): ${histStr}\n`;
+        context += `  Tendance récente pour ${paramCode} (5 dernières valeurs) : ${histStr}\n`;
       }
     }
   }
@@ -171,11 +221,11 @@ function genererReponseSecours(question, alertesActives) {
 }
 
 /**
- * POST /api/assistant/chat
+ * POST /api/assistant/chat or POST /api/assistant
  * Body: { "id_astronaute": 1, "question": "..." }
- * Response: { "reponse": "...", "mode": "IA", "id_message": "..." }
+ * Response: { "reponse": "...", "mode": "IA", "engine": "ollama-local (gemma2:2b)", "id_message": "..." }
  */
-router.post('/chat', async (req, res) => {
+router.post(['/', '/chat'], async (req, res) => {
   const { id_astronaute, question } = req.body;
 
   // 1. Validation
@@ -269,27 +319,46 @@ router.post('/chat', async (req, res) => {
       }
     }
 
-    // 5. Build BNF11 compliant context (vital signs only, zero personal data)
-    const contexteSante = construireContexte(dernieresMesures, alertesActives, historiqueParametresAlerte);
+    // 5. Build BNF11 compliant context (vital signs only, zero nominative personal data)
+    const contexteSante = construireContexte(id_astronaute, dernieresMesures, alertesActives, historiqueParametresAlerte);
 
+    const userPrompt = `${contexteSante}\n\nQuestion de l'astronaute :\n${question.trim()}`;
     const messages = [
       { role: 'system', content: SYSTEM_PROMPT },
       {
         role: 'user',
-        content: `${contexteSante}\n\nAstronaut question:\n${question.trim()}`
+        content: userPrompt
       }
     ];
 
-    // 6. Attempt AI call with fallback to secours
+    // 6. Attempt AI call: Priority 1: Ollama Local SLM -> Priority 2: Cloud API -> Priority 3: Deterministic Fallback
     let reponse = '';
     let mode = 'IA';
+    let engine = '';
 
+    // Step 1: Priority to local offline Ollama SLM
     try {
-      reponse = await appelerIA(messages);
-    } catch (aiError) {
-      console.warn('AI call failed or key absent, switching to secours mode:', aiError.message);
-      mode = 'secours';
-      reponse = genererReponseSecours(question, alertesActives);
+      const ollamaRes = await appelerOllama(userPrompt, SYSTEM_PROMPT);
+      reponse = ollamaRes.text;
+      mode = 'IA';
+      engine = `ollama-local (${ollamaRes.model})`;
+    } catch (ollamaError) {
+      console.warn(`[Edge-AI] Ollama offline or timed out (${ollamaError.message}), attempting Cloud AI fallback...`);
+
+      // Step 2: Fallback to Cloud AI if configured
+      try {
+        reponse = await appelerIA(messages);
+        mode = 'IA';
+        const cloudModel = process.env.AI_MODEL || 'gpt-4o-mini';
+        engine = `cloud (${cloudModel})`;
+      } catch (cloudError) {
+        console.warn(`[Edge-AI] Cloud AI fallback unavailable (${cloudError.message}), switching to deterministic secours mode`);
+
+        // Step 3: Zero-crash deterministic medical fallback
+        mode = 'secours';
+        engine = 'deterministic-fallback';
+        reponse = genererReponseSecours(question, alertesActives);
+      }
     }
 
     // 7. Record messages in database (table message_ia)
@@ -339,6 +408,7 @@ router.post('/chat', async (req, res) => {
     return res.status(200).json({
       reponse,
       mode,
+      engine,
       id_message: idMessageAssistant
     });
   } catch (err) {
@@ -509,26 +579,40 @@ router.post('/resume-equipage', async (req, res) => {
       }
     }
 
+    const crewPrompt = `${contexteAnonyme}\nProvide a concise 4 to 6 sentence factual crew health summary for the flight surgeon. Report critical alerts first, then attention alerts, then nominal members.`;
+
     const messages = [
       { role: 'system', content: SYSTEM_PROMPT_EQUIPAGE },
       {
         role: 'user',
-        content: `${contexteAnonyme}\nProvide a concise 4 to 6 sentence factual crew health summary for the flight surgeon. Report critical alerts first, then attention alerts, then nominal members.`
+        content: crewPrompt
       }
     ];
 
-    // 5. Attempt AI call with fallback to secours
+    // 5. Attempt AI call: Local Ollama -> Cloud AI -> Deterministic secours
     let resume = '';
     let mode = 'IA';
+    let engine = '';
 
     try {
-      const reponseBrute = await appelerIA(messages);
-      // De-anonymize AI output: replace "Astronaut 1" with actual nom_code
-      resume = deanonymiser(reponseBrute, aliasMap);
-    } catch (aiError) {
-      console.warn('AI call for crew summary failed or key absent, switching to secours mode:', aiError.message);
-      mode = 'secours';
-      resume = genererResumeEquipageSecours(astronautes, dernieresMesures, alertesActives);
+      const ollamaRes = await appelerOllama(crewPrompt, SYSTEM_PROMPT_EQUIPAGE);
+      resume = deanonymiser(ollamaRes.text, aliasMap);
+      mode = 'IA';
+      engine = `ollama-local (${ollamaRes.model})`;
+    } catch (ollamaErr) {
+      console.warn(`[Crew-Summary] Ollama unavailable (${ollamaErr.message}), attempting Cloud AI fallback...`);
+      try {
+        const reponseBrute = await appelerIA(messages);
+        resume = deanonymiser(reponseBrute, aliasMap);
+        mode = 'IA';
+        const cloudModel = process.env.AI_MODEL || 'gpt-4o-mini';
+        engine = `cloud (${cloudModel})`;
+      } catch (aiError) {
+        console.warn('[Crew-Summary] AI call failed, switching to deterministic secours mode:', aiError.message);
+        mode = 'secours';
+        engine = 'deterministic-fallback';
+        resume = genererResumeEquipageSecours(astronautes, dernieresMesures, alertesActives);
+      }
     }
 
     // 6. Record in rapport table (type: 'quotidien', id_astronaute: NULL = équipage)
@@ -550,7 +634,8 @@ router.post('/resume-equipage', async (req, res) => {
 
     return res.status(200).json({
       resume,
-      mode
+      mode,
+      engine
     });
   } catch (err) {
     console.error('Error generating crew summary:', err);
@@ -558,6 +643,51 @@ router.post('/resume-equipage', async (req, res) => {
       message: 'Erreur interne lors de la génération du résumé d’équipage'
     });
   }
+});
+
+/**
+ * GET /api/assistant/status
+ * Healthcheck & engine discovery endpoint for frontend and diagnostic monitoring.
+ */
+router.get('/status', async (req, res) => {
+  const baseUrl = process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434';
+  const model = process.env.OLLAMA_MODEL || 'gemma2:2b';
+  let ollamaAvailable = false;
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 1200);
+    const resp = await fetch(`${baseUrl.replace(/\/+$/, '')}/api/tags`, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (resp.ok) {
+      ollamaAvailable = true;
+    }
+  } catch {
+    ollamaAvailable = false;
+  }
+
+  const cloudConfigured = Boolean(process.env.AI_API_KEY && process.env.AI_API_KEY.trim());
+
+  let activeEngine = 'deterministic-fallback';
+  if (ollamaAvailable) {
+    activeEngine = `ollama-local (${model})`;
+  } else if (cloudConfigured) {
+    activeEngine = `cloud (${process.env.AI_MODEL || 'gpt-4o-mini'})`;
+  }
+
+  res.status(200).json({
+    edge_ai: {
+      provider: 'ollama',
+      available: ollamaAvailable,
+      model,
+      base_url: baseUrl
+    },
+    cloud_ai: {
+      configured: cloudConfigured,
+      model: process.env.AI_MODEL || 'gpt-4o-mini'
+    },
+    engine_actif: activeEngine
+  });
 });
 
 /**

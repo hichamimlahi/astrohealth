@@ -116,6 +116,21 @@ npx ng serve
 ```
 Open your browser at **http://localhost:4200**.
 
+### 5. Edge AI Local Mode (100% Offline via Ollama)
+
+To run the onboard medical AI completely offline in deep space (zero telemetry sent outside the local network, zero cloud dependency):
+1. Install [Ollama](https://ollama.ai) (Windows / macOS / Linux).
+2. Download the recommended lightweight Small Language Model (SLM):
+   ```powershell
+   ollama pull gemma2:2b
+   # or: ollama pull phi3
+   ```
+3. Start the local Ollama inference service:
+   ```powershell
+   ollama serve
+   ```
+4. Sila automatically detects the local instance at `http://127.0.0.1:11434` and prioritizes it. If Ollama is not started, Sila seamlessly engages its zero-crash **Deterministic Medical Fallback** or Cloud Relay without interrupting the mission.
+
 ---
 
 ## Jury Live Demo (1-Click Mode)

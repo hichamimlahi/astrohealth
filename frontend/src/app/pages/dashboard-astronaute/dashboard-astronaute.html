@@ -400,7 +400,12 @@
 
   @if (chatOuvert) {
     <div class="panneau-chat">
-      <div class="chat-titre">Sila Assistant</div>
+      <div class="chat-titre">
+        <span class="chat-titre-texte">Sila Assistant</span>
+        <span class="badge-moteur-ia" [class.local]="moteurIAActif().includes('Ollama')" [class.secours]="moteurIAActif().includes('Secours')">
+          {{ badgeMoteurComplet() }}
+        </span>
+      </div>
       <div class="chat-avertissement">
         Not a medical diagnosis. Always contact the ground doctor for serious symptoms.
       </div>
@@ -416,12 +421,20 @@
         </div>
       </div>
 
-            <div class="chat-messages">
+      <div class="chat-messages">
         @for (m of messages(); track $index) {
           <div [class]="'message ' + m.auteur">
-            {{ m.texte }}
-            @if (m.mode === 'secours') {
-              <span class="mode">backup answer (AI service unavailable)</span>
+            <div class="message-texte">{{ m.texte }}</div>
+            @if (m.auteur === 'assistant') {
+              <div class="message-moteur-tag">
+                @if (m.engine?.includes('ollama')) {
+                  <span class="tag-moteur local">🛰️ Edge AI Hors-Ligne : Ollama (gemma2:2b)</span>
+                } @else if (m.engine?.includes('deterministic') || m.mode === 'secours') {
+                  <span class="tag-moteur secours">🛡️ Mode Secours Déterministe</span>
+                } @else if (m.engine?.includes('cloud')) {
+                  <span class="tag-moteur cloud">☁️ Cloud AI Relay ({{ m.engine }})</span>
+                }
+              </div>
             }
           </div>
         }
@@ -432,7 +445,8 @@
 
       <div class="chat-saisie">
         <input #champ type="text" placeholder="Ask a question..." (keyup.enter)="envoyer(champ)">
-        <button [disabled]="enAttente()" (click)="envoyer(champ)">Send</button>      </div>
+        <button [disabled]="enAttente()" (click)="envoyer(champ)">Send</button>
+      </div>
     </div>
   }
 </div>

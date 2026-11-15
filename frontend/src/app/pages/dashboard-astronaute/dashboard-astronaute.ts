@@ -211,8 +211,25 @@ export class DashboardAstronaute implements AfterViewInit {
 
   chatOuvert = false;
   enAttente = signal(false);
-  messages = signal<{ auteur: string; texte: string; mode: string }[]>([
-    { auteur: 'assistant', texte: 'Hello! I am the Sila assistant. Ask me about your vital signs or your alerts.', mode: '' }
+  moteurIAActif = signal<string>('Edge AI Local (Ollama)');
+  badgeMoteurComplet = computed(() => {
+    const m = this.moteurIAActif();
+    if (m.includes('Ollama') || m.includes('ollama') || m.includes('Edge AI')) {
+      return '🛰️ Edge AI Local (Ollama)';
+    }
+    if (m.includes('Déterministe') || m.includes('deterministic') || m.includes('Secours')) {
+      return '🛡️ Mode Secours Déterministe';
+    }
+    return '☁️ Cloud AI Relay';
+  });
+
+  messages = signal<{ auteur: string; texte: string; mode: string; engine?: string }[]>([
+    {
+      auteur: 'assistant',
+      texte: 'Hello! I am the Sila medical assistant. Ask me about your vital signs, active alerts, or space hazards.',
+      mode: '',
+      engine: 'ollama-local (gemma2:2b)'
+    }
   ]);
 
   private parametres: Parametre[] = [];
@@ -334,6 +351,7 @@ export class DashboardAstronaute implements AfterViewInit {
     }
     this.initialiserEnvironnement();
     this.initialiserRoutine();
+    this.verifierStatutAssistant();
     this.graphFc = this.creerGraphique(this.graphiqueFc, 'Heart rate (bpm)', 40, 120);
     this.graphSpo2 = this.creerGraphique(this.graphiqueSpo2, 'SpO2 (%)', 85, 100);
     this.demarrerChargement();
@@ -610,11 +628,32 @@ export class DashboardAstronaute implements AfterViewInit {
     });
   }
 
+  verifierStatutAssistant() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    this.api.getStatutAssistant().pipe(
+      catchError(() => of(null))
+    ).subscribe(status => {
+      if (status?.engine_actif) {
+        this.moteurIAActif.set(this.formaterLabelMoteur(status.engine_actif));
+      }
+    });
+  }
+
+  formaterLabelMoteur(engine: string): string {
+    if (!engine) return 'Edge AI Local (Ollama)';
+    if (engine.includes('ollama')) return 'Edge AI Local (Ollama)';
+    if (engine.includes('deterministic') || engine.includes('secours')) return 'Mode Secours Déterministe';
+    if (engine.includes('cloud')) return 'Cloud AI Relay';
+    return engine;
+  }
+
   ouvrirFermerChat() {
     this.chatOuvert = !this.chatOuvert;
   }
 
-    envoyer(champ: HTMLInputElement) {
+  envoyer(champ: HTMLInputElement) {
     const question = champ.value.trim();
     if (question === '' || this.enAttente()) {
       return;
@@ -626,23 +665,28 @@ export class DashboardAstronaute implements AfterViewInit {
 
     this.api.envoyerQuestion(this.idAstronaute, question).subscribe({
       next: (rep) => {
-        this.ajouterMessage('assistant', rep.reponse, rep.mode);
+        const engineLabel = rep.engine || (rep.mode === 'secours' ? 'deterministic-fallback' : 'ollama-local (gemma2:2b)');
+        this.moteurIAActif.set(this.formaterLabelMoteur(engineLabel));
+        this.ajouterMessage('assistant', rep.reponse, rep.mode, engineLabel);
         this.enAttente.set(false);
       },
       error: () => {
+        const fallbackEngine = 'deterministic-fallback';
+        this.moteurIAActif.set('Mode Secours Déterministe');
         this.ajouterMessage(
           'assistant',
           'The assistant is not reachable right now. Your latest values are shown on the dashboard. '
             + 'If an alert is active, rest, re-measure in 10 minutes and contact the ground doctor if it does not improve.',
-          'secours'
+          'secours',
+          fallbackEngine
         );
         this.enAttente.set(false);
       }
     });
   }
 
-  ajouterMessage(auteur: string, texte: string, mode: string) {
-    this.messages.update(liste => [...liste, { auteur: auteur, texte: texte, mode: mode }]);
+  ajouterMessage(auteur: string, texte: string, mode: string, engine?: string) {
+    this.messages.update(liste => [...liste, { auteur, texte, mode, engine }]);
   }
 
   selectionnerOrgane(org: OrganeScanner) {
