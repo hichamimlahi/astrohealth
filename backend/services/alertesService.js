@@ -21,6 +21,15 @@ function depasseSeuil(mesure, seuil) {
 
 // Creer une recommandation selon le niveau
 function obtenirRecommandation(niveau, code) {
+    if (code === 'RADIATION') {
+        return {
+            type: 'protection_radiation',
+            texte: niveau === 'critique'
+                ? 'ALERTE CRITIQUE : Rejoignez immédiatement le module blindé anti-radiations et contactez le médecin de mission.'
+                : 'Rejoignez le module blindé anti-radiations et réduisez les sorties extravéhiculaires.'
+        };
+    }
+
     if (niveau === 'critique') {
         return {
             type: 'contact_medecin',
@@ -32,12 +41,6 @@ function obtenirRecommandation(niveau, code) {
         return {
             type: 'repos',
             texte: 'Prenez du repos et surveillez votre etat de sante.'
-        };
-    }
-    if (code === 'RADIATION') {
-        return {
-            type: 'protection_radiation',
-            texte: 'Rejoignez le module blindé anti-radiations et réduisez les sorties extravéhiculaires.'
         };
     }
     return {

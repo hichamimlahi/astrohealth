@@ -70,6 +70,10 @@ export class DashboardAstronaute implements AfterViewInit {
 
   environnementActif = signal<EnvironnementMission>(this.environnements[0]);
 
+  panneauDemoOuvert = signal(false);
+  chargementScenario = signal(false);
+  scenarioActif = signal<string>('');
+
   nom = signal('');
   cartes = signal<CarteMesure[]>([]);
   alerteActive = signal<Alerte | null>(null);
@@ -138,6 +142,31 @@ export class DashboardAstronaute implements AfterViewInit {
         }
       }
     }
+  }
+
+  basculerPanneauDemo() {
+    this.panneauDemoOuvert.update(ouvert => !ouvert);
+  }
+
+  declencherScenario(nom: 'nominal' | 'hypoxia' | 'solar_storm') {
+    if (this.chargementScenario()) {
+      return;
+    }
+    this.chargementScenario.set(true);
+    this.scenarioActif.set(nom);
+
+    this.api.lancerScenario(nom, this.idAstronaute).subscribe({
+      next: () => {
+        this.declencheur.next();
+        setTimeout(() => {
+          this.chargementScenario.set(false);
+        }, 600);
+      },
+      error: (err) => {
+        console.error('Erreur lancement scenario:', err);
+        this.chargementScenario.set(false);
+      }
+    });
   }
 
     demarrerChargement() {

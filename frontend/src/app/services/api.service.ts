@@ -112,6 +112,13 @@ export class ApiService {
     genererResumeEquipage(): Observable<ResumeEquipage> {
     return this.http.post<ResumeEquipage>(this.adresse + '/assistant/resume-equipage', {});
   }
+
+  lancerScenario(nom: 'nominal' | 'hypoxia' | 'solar_storm' | string, idAstronaute = 1): Observable<any> {
+    return this.http.post<any>(this.adresse + '/simulateur/scenario', {
+      nom: nom,
+      id_astronaute: idAstronaute
+    });
+  }
   private convertirMesure(m: any): MesureRecente {
     return {
       code: m.code,

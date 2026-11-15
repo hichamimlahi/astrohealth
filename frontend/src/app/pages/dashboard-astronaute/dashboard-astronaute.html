@@ -131,6 +131,57 @@
 
   <app-urgence [idAstronaute]="idAstronaute" />
 
+  <button class="bouton-demo-flottant" (click)="basculerPanneauDemo()" title="Ouvrir le panneau de simulation temps réel pour le jury">
+    🧪 Mode Démo
+  </button>
+
+  @if (panneauDemoOuvert()) {
+    <div class="panneau-demo-jury">
+      <div class="demo-entete">
+        <div class="demo-titre">
+          <span class="icone-lab">🧪</span> Mode Démo Jury (1-Click)
+        </div>
+        <button class="bouton-fermer-demo" (click)="basculerPanneauDemo()">✕</button>
+      </div>
+
+      <p class="demo-description">
+        Déclenchez des scénarios médicaux live émis en direct via Socket.IO :
+      </p>
+
+      <div class="grille-scenarios">
+        <button class="btn-scenario btn-nominal" [disabled]="chargementScenario()" (click)="declencherScenario('nominal')">
+          <span class="pastille-etat">🟢</span>
+          <div class="scenario-details">
+            <strong>Scénario Nominal</strong>
+            <span>Tout au vert (SpO2 98%, FC 72, Rad 0.15)</span>
+          </div>
+        </button>
+
+        <button class="btn-scenario btn-hypoxia" [disabled]="chargementScenario()" (click)="declencherScenario('hypoxia')">
+          <span class="pastille-etat">🟠</span>
+          <div class="scenario-details">
+            <strong>Baisse progressive d'oxygène SpO2</strong>
+            <span>Hypoxie critique (SpO2 86%, FC 118 bpm)</span>
+          </div>
+        </button>
+
+        <button class="btn-scenario btn-solar" [disabled]="chargementScenario()" (click)="declencherScenario('solar_storm')">
+          <span class="pastille-etat">🔴</span>
+          <div class="scenario-details">
+            <strong>Tempête Solaire / Pic de Radiation</strong>
+            <span>Pic critique CSA (Radiation 2.8 mSv/j)</span>
+          </div>
+        </button>
+      </div>
+
+      @if (chargementScenario()) {
+        <div class="demo-chargement">
+          <span class="spinner-demo"></span> Émission Socket.IO en cours...
+        </div>
+      }
+    </div>
+  }
+
   <button class="bouton-chat" (click)="ouvrirFermerChat()">💬</button>
 
   @if (chatOuvert) {
