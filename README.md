@@ -1,15 +1,15 @@
-# SahtHealth
+# Sila
 
 **Autonomous health monitoring and AI assistant for astronauts on deep-space missions.**  
 Project of team **TAMUNT** for the NASA Space Apps Challenge 2026 (Ben Guerir), challenge: *Create Health Monitoring Software for Astronauts on Space Missions*.
 
-> SahtHealth is a prototype. It is **not a certified medical device**. All data in this repository is simulated, and the alert thresholds are indicative and must be validated by aerospace medical professionals.
+> Sila is a prototype. It is **not a certified medical device**. All data in this repository is simulated, and the alert thresholds are indicative and must be validated by aerospace medical professionals.
 
 ---
 
 ## What it does
 
-Astronauts on long-duration exploration missions (Moon, Mars) are millions of kilometers from Earth, facing up to **20 minutes of one-way communication latency** and potential communication blackouts. SahtHealth provides:
+Astronauts on long-duration exploration missions (Moon, Mars) are millions of kilometers from Earth, facing up to **20 minutes of one-way communication latency** and potential communication blackouts. Sila provides:
 
 - **Astronauts** an autonomous personal dashboard: real-time vital signs with clear color-coded states, dynamic dose gauges, charts with normal physiological ranges, active alert banners, operational countermeasures, and an explanatory AI health assistant.
 - **Flight Surgeons (Ground Doctors)** a crew overview (status of each astronaut), active alerts table, multi-astronaut trend charts, historical telemetry browser (filter by astronaut, parameter, and time window), and an AI-generated crew telemetry summary.
@@ -23,12 +23,12 @@ Astronauts on long-duration exploration missions (Moon, Mars) are millions of ki
 ## Space Medical Security & Deep-Space Architecture
 
 ### 1. Earth-Mars Communication Latency Management
-SahtHealth includes a live mission environment selector in the header:
+Sila includes a live mission environment selector in the header:
 - **ISS (Low Earth Orbit):** 0.2 s latency | Real-Time Earth Synchronization.
 - **Artemis Lunar Base:** 2.6 s latency | Lunar Relay Active.
 - **Mars Transit / Base:** 20 min (One-Way) latency | **Autonomous Onboard Mode Active**.
 
-When Mars Transit is active, SahtHealth automatically engages its **Autonomous Onboard Mode**, warning the crew that telemetry-driven medical countermeasures and local AI assistance operate independently without waiting for mission control in Houston.
+When Mars Transit is active, Sila automatically engages its **Autonomous Onboard Mode**, warning the crew that telemetry-driven medical countermeasures and local AI assistance operate independently without waiting for mission control in Houston.
 
 ### 2. NASA Human Research Program (HRP) 5 Hazards & CSA Radiation
 Each monitored parameter is explicitly mapped to the **5 Hazards of Human Spaceflight**:
@@ -62,7 +62,7 @@ Each monitored parameter is explicitly mapped to the **5 Hazards of Human Spacef
 ## Repository Structure
 
 ```
-SahtHealth/
+Sila/
 ├── backend/     Node.js + Express API (port 3000)
 │   ├── config/  Database connection (MySQL)
 │   ├── routes/  REST routes (assistant, mesures, alertes, simulateur, urgences)

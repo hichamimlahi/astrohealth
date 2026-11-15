@@ -131,7 +131,7 @@ export class VueMedecin implements AfterViewInit {
   initialiserEnvironnement() {
     if (isPlatformBrowser(this.platformId)) {
       try {
-        const saved = localStorage.getItem('sahthealth_mission_env') || localStorage.getItem('sila_mission_env');
+        const saved = localStorage.getItem('sila_mission_env') || localStorage.getItem('sahthealth_mission_env');
         if (saved) {
           const trouve = this.environnements.find(e => e.id === saved);
           if (trouve) {
@@ -150,7 +150,7 @@ export class VueMedecin implements AfterViewInit {
       this.environnementActif.set(cible);
       if (isPlatformBrowser(this.platformId)) {
         try {
-          localStorage.setItem('sahthealth_mission_env', cible.id);
+          localStorage.setItem('sila_mission_env', cible.id);
         } catch (e) {
           console.warn('Storage inaccessible:', e);
         }

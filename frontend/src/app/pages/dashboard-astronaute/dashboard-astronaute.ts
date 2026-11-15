@@ -123,7 +123,7 @@ export class DashboardAstronaute implements AfterViewInit {
       dangerNasa: 'Isolement & Confinement',
       rolePhysio: 'Coordination centrale, cognition, mémoire et régulation neuro-végétative circadienne.',
       impactSpatial: 'L’isolement et les 16 levers de soleil/sol dérèglent l’horloge circadienne. La redistribution liquidienne céphalique génère une hausse de pression intracrânienne (syndrome SANS).',
-      recommandation: 'Maintenir 8h de repos nocturne avec masque occultant. Session de relaxation guidée avec l’Assistant SahtHealth et luminothérapie bleue au réveil.',
+      recommandation: 'Maintenir 8h de repos nocturne avec masque occultant. Session de relaxation guidée avec l’Assistant Sila et luminothérapie bleue au réveil.',
       position3D: [0, 1.58, 0.08],
       screenX: 0,
       screenY: 0,
@@ -157,7 +157,7 @@ export class DashboardAstronaute implements AfterViewInit {
       dangerNasa: 'Environnement Clos & Hostile (Cabine Pressurisée)',
       rolePhysio: 'Hématose alvéolaire, absorption d’oxygène et élimination du dioxyde de carbone métabolique.',
       impactSpatial: 'L’absence de convection thermique naturelle favorise la formation de bulles stagnantes de CO2 toxiques autour de l’astronaute au repos. Risque d’hypoxie silencieuse si l’ECLSS dévie.',
-      recommandation: 'Vérifier la ventilation forcée des sas. En cas de chute de SpO2 < 92 %, chausser immédiatement le masque O2 d’urgence et lancer le diagnostic environnemental SahtHealth.',
+      recommandation: 'Vérifier la ventilation forcée des sas. En cas de chute de SpO2 < 92 %, chausser immédiatement le masque O2 d’urgence et lancer le diagnostic environnemental Sila.',
       position3D: [0.10, 1.16, 0.15],
       screenX: 0,
       screenY: 0,
@@ -212,7 +212,7 @@ export class DashboardAstronaute implements AfterViewInit {
   chatOuvert = false;
   enAttente = signal(false);
   messages = signal<{ auteur: string; texte: string; mode: string }[]>([
-    { auteur: 'assistant', texte: 'Hello! I am the SahtHealth assistant. Ask me about your vital signs or your alerts.', mode: '' }
+    { auteur: 'assistant', texte: 'Hello! I am the Sila assistant. Ask me about your vital signs or your alerts.', mode: '' }
   ]);
 
   private parametres: Parametre[] = [];
@@ -352,7 +352,7 @@ export class DashboardAstronaute implements AfterViewInit {
   initialiserRoutine() {
     if (isPlatformBrowser(this.platformId)) {
       try {
-        const sauveg = localStorage.getItem('sahthealth_routine_taches');
+        const sauveg = localStorage.getItem('sila_routine_taches') || localStorage.getItem('sahthealth_routine_taches');
         if (sauveg) {
           const etats: { id: string; fait: boolean }[] = JSON.parse(sauveg);
           this.routineTaches.update(taches =>
@@ -375,7 +375,7 @@ export class DashboardAstronaute implements AfterViewInit {
     if (isPlatformBrowser(this.platformId)) {
       try {
         const etats = this.routineTaches().map(t => ({ id: t.id, fait: t.fait }));
-        localStorage.setItem('sahthealth_routine_taches', JSON.stringify(etats));
+        localStorage.setItem('sila_routine_taches', JSON.stringify(etats));
       } catch (e) {
         console.warn('Storage inaccessible:', e);
       }
@@ -385,7 +385,7 @@ export class DashboardAstronaute implements AfterViewInit {
   initialiserEnvironnement() {
     if (isPlatformBrowser(this.platformId)) {
       try {
-        const saved = localStorage.getItem('sahthealth_mission_env') || localStorage.getItem('sila_mission_env');
+        const saved = localStorage.getItem('sila_mission_env') || localStorage.getItem('sahthealth_mission_env');
         if (saved) {
           const trouve = this.environnements.find(e => e.id === saved);
           if (trouve) {
@@ -404,7 +404,7 @@ export class DashboardAstronaute implements AfterViewInit {
       this.environnementActif.set(cible);
       if (isPlatformBrowser(this.platformId)) {
         try {
-          localStorage.setItem('sahthealth_mission_env', cible.id);
+          localStorage.setItem('sila_mission_env', cible.id);
         } catch (e) {
           console.warn('Storage inaccessible:', e);
         }

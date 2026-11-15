@@ -5,8 +5,8 @@ import db from '../config/db.js';
 const router = express.Router();
 
 const SYSTEM_PROMPT =
-  "You are the health assistant of the SahtHealth space health monitoring application. " +
-  "All alert levels and normal ranges are calculated deterministically by the SahtHealth rule engine. " +
+  "You are the health assistant of the Sila space health monitoring application. " +
+  "All alert levels and normal ranges are calculated deterministically by the Sila rule engine. " +
   "Your role is strictly explanatory: you only explain the measurements and alerts provided in your context. " +
   "You never give a medical diagnosis, never invent or calculate thresholds, and never prescribe treatment. " +
   "In accordance with space privacy rule BNF11, no personal or nominative data is ever shared with you. " +
@@ -16,8 +16,8 @@ const SYSTEM_PROMPT =
   "Answer in the language of the question.";
 
 const SYSTEM_PROMPT_EQUIPAGE =
-  "You are the medical operations assistant for the SahtHealth spaceflight mission monitoring system. " +
-  "All telemetry thresholds and alerts are computed deterministically by the SahtHealth medical engine. " +
+  "You are the medical operations assistant for the Sila spaceflight mission monitoring system. " +
+  "All telemetry thresholds and alerts are computed deterministically by the Sila medical engine. " +
   "Provide a concise, factual crew health summary in 4 to 6 sentences for the flight surgeon. " +
   "Report critical alerts first, followed by attention alerts and nominal parameters. " +
   "In accordance with rule BNF11, all astronaut identities are anonymized (e.g. Astronaut 1, Astronaut 2); " +
