@@ -164,4 +164,4 @@ Details and the status of each hazard in the application are in `docs/sources-na
 
 ## Team OrionX
 
-hajar en-neyah (Team Owner), Sara Sedki, ABBOU Aimrane, hicham imlahi, Hamza Koujili
+ABBOU Aimrane (Team Owner), Sara Sedki,hajar en-neyah , hicham imlahi, Hamza Koujili
