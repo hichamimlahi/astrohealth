@@ -38,6 +38,13 @@ export interface ReponseAssistant {
   mode: string;
   id_message: string;
 }
+export interface Urgence {
+  id_message: string;
+  id_astronaute: number;
+  nom_code: string;
+  contenu: string;
+  horodatage: string;
+}
 export interface ResumeEquipage {
   resume: string;
   mode: string;
@@ -89,6 +96,17 @@ export class ApiService {
       id_astronaute: idAstronaute,
       question: question
     });
+  }
+
+    envoyerUrgence(idAstronaute: number, texte: string): Observable<any> {
+    return this.http.post<any>(this.adresse + '/urgences', {
+      id_astronaute: idAstronaute,
+      texte: texte
+    });
+  }
+
+  getUrgences(minutes = 60): Observable<Urgence[]> {
+    return this.http.get<Urgence[]>(this.adresse + '/urgences', { params: { minutes } });
   }
 
     genererResumeEquipage(): Observable<ResumeEquipage> {

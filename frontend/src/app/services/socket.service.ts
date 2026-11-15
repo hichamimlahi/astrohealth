@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 
 export interface EvenementTempsReel {
-  type: 'mesure' | 'alerte';
+  type: 'mesure' | 'alerte' | 'urgence';
   id_astronaute: number;
 }
 
@@ -28,6 +28,10 @@ export class SocketService {
 
     this.socket.on('nouvelle_alerte', (donnees: any) => {
       this.evenements$.next({ type: 'alerte', id_astronaute: Number(donnees.id_astronaute) });
+    });
+
+    this.socket.on('nouvelle_urgence', (donnees: any) => {
+      this.evenements$.next({ type: 'urgence', id_astronaute: Number(donnees.id_astronaute) });
     });
   }
 }

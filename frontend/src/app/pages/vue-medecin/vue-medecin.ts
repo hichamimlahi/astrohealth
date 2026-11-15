@@ -1,10 +1,10 @@
-import { Component, DestroyRef, ElementRef, ViewChild, AfterViewInit, PLATFORM_ID, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, ViewChild, AfterViewInit, PLATFORM_ID, inject, signal, computed } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
-import { Subject, forkJoin, merge, of, timer, switchMap, catchError } from 'rxjs';
-import { ApiService, Alerte, Astronaute, MesureRecente, Parametre } from '../../services/api.service';
+import { Subject, forkJoin, merge, of, timer, filter, switchMap, catchError } from 'rxjs';
+import { ApiService, Alerte, Astronaute, MesureRecente, Parametre, Urgence } from '../../services/api.service';
 import { SocketService } from '../../services/socket.service';
 Chart.register(...registerables);
 
@@ -44,6 +44,9 @@ export class VueMedecin implements AfterViewInit {
   equipage = signal<CarteAstronaute[]>([]);
   alertes = signal<Alerte[]>([]);
   lienEnLigne = signal(true);
+  urgences = signal<Urgence[]>([]);
+  private urgencesIgnorees = signal<string[]>([]);
+  urgencesVisibles = computed(() => this.urgences().filter(u => !this.urgencesIgnorees().includes(u.id_message)));
   derniereMaj = signal('');
   resume = signal('');
     modeResume = signal('');
@@ -87,6 +90,26 @@ export class VueMedecin implements AfterViewInit {
     }
     this.creerGraphique();
     this.demarrerChargement();
+    this.demarrerSuiviUrgences();
+  }
+
+  demarrerSuiviUrgences() {
+    merge(timer(0, 5000), this.socket.evenements$.pipe(filter(e => e.type === 'urgence'))).pipe(
+      switchMap(() => this.api.getUrgences().pipe(catchError(() => of(null)))),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(liste => {
+      if (liste !== null) {
+        this.urgences.set(liste);
+      }
+    });
+  }
+
+  ignorerUrgence(id: string) {
+    this.urgencesIgnorees.update(liste => [...liste, id]);
+  }
+
+  formaterHeure(horodatage: string): string {
+    return new Date(horodatage).toLocaleTimeString('en-GB');
   }
 
   demarrerChargement() {

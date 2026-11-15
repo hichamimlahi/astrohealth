@@ -34,6 +34,14 @@
       </div>
     </header>
 
+    @for (u of urgencesVisibles(); track u.id_message) {
+      <div class="bandeau-urgence" role="alert">
+        <div class="titre-urgence"><strong>EMERGENCY - {{ u.nom_code }}</strong> <span>{{ formaterHeure(u.horodatage) }}</span></div>
+        <p>Voice report: "{{ u.contenu }}"</p>
+        <button (click)="ignorerUrgence(u.id_message)">Dismiss</button>
+      </div>
+    }
+
     <section class="equipage">
       @for (a of equipage(); track a.id) {
         <div [class]="'carte-astro ' + a.etat">

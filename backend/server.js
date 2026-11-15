@@ -10,6 +10,7 @@ import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import assistantRouter from './routes/assistant.js';
 import simulateurRouter from './routes/simulateur.js';
+import urgencesRouter from './routes/urgences.js';
 
 dotenv.config();
 const app = express();
@@ -47,6 +48,7 @@ app.use ('/api/alertes' , alertesRouter);
 app.use('/api/mesures', mesuresRouter);
 app.use('/api/assistant', assistantRouter);
 app.use('/api/simulateur', simulateurRouter);
+app.use('/api/urgences', urgencesRouter);
 //test route 
 app.get('/' , (req, res)=>{
     res.send('astrohealth API is running!');
