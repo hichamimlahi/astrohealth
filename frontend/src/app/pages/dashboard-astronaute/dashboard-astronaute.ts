@@ -16,6 +16,8 @@ interface CarteMesure {
   valeur: number | null;
   unite: string;
   etat: string;
+  hazardBadge: string;
+  pourcentageJauge?: number;
 }
 
 @Component({
@@ -54,10 +56,11 @@ export class DashboardAstronaute implements AfterViewInit {
   private graphSpo2?: Chart;
 
   private modeleCartes = [
-    { code: 'FC', label: 'Heart rate' },
-    { code: 'SPO2', label: 'Blood oxygen (SpO2)' },
-    { code: 'TEMP', label: 'Body temperature' },
-    { code: 'SOMMEIL', label: 'Sleep last night' }
+    { code: 'FC', label: 'Heart rate', hazardBadge: '🪐 Danger NASA : Gravité Altérée (Cardio)' },
+    { code: 'SPO2', label: 'Blood oxygen (SpO2)', hazardBadge: '舱 Danger NASA : Environnement Clos & Hostile' },
+    { code: 'TEMP', label: 'Body temperature', hazardBadge: '舱 Danger NASA : Environnement Clos & Hostile' },
+    { code: 'SOMMEIL', label: 'Sleep last night', hazardBadge: '🧠 Danger NASA : Isolement & Confinement' },
+    { code: 'RADIATION', label: 'Radiation daily dose', hazardBadge: '☢️ Danger NASA : Radiation Spatiale (CSA)' }
   ];
 
   @ViewChild('graphiqueFc') graphiqueFc!: ElementRef<HTMLCanvasElement>;
@@ -119,16 +122,23 @@ export class DashboardAstronaute implements AfterViewInit {
       this.nom.set(moi.nom_code);
     }
 
-    const cartes = this.modeleCartes.map(m => {
+    const cartes: CarteMesure[] = this.modeleCartes.map(m => {
       const mesure = d.dernieres.find(x => x.code === m.code);
       const valeur = mesure ? mesure.valeur : null;
       const p = this.parametres.find(x => x.code === m.code);
+      const etat = this.calculerEtat(m.code, valeur);
+      const pourcentageJauge = (m.code === 'RADIATION' && valeur !== null)
+        ? Math.min(100, Math.max(0, Math.round((valeur / 2.0) * 100)))
+        : undefined;
+
       return {
         code: m.code,
         label: m.label,
         valeur: valeur,
-        unite: p ? p.unite : '',
-        etat: this.calculerEtat(m.code, valeur)
+        unite: p ? p.unite : (m.code === 'RADIATION' ? 'mSv/jour' : ''),
+        etat: etat,
+        hazardBadge: m.hazardBadge,
+        pourcentageJauge: pourcentageJauge
       };
     });
     this.cartes.set(cartes);
@@ -138,10 +148,14 @@ export class DashboardAstronaute implements AfterViewInit {
     this.nombreAlertes.set(mesAlertes.length);
     this.alerteActive.set(alerte);
 
+    const aCritique = cartes.some(c => c.etat === 'critique');
     const horsPlage = cartes.some(c => c.etat === 'attention');
     if (alerte && alerte.niveau === 'critique') {
       this.niveauReco.set('critique');
       this.recommandation.set('Contact the ground doctor immediately.');
+    } else if (aCritique) {
+      this.niveauReco.set('critique');
+      this.recommandation.set('Critical threshold exceeded. Contact the ground doctor immediately.');
     } else if (alerte) {
       this.niveauReco.set('attention');
       this.recommandation.set('Re-measure in 10 minutes. If the value stays out of range, contact the ground doctor.');
@@ -161,6 +175,15 @@ export class DashboardAstronaute implements AfterViewInit {
   calculerEtat(code: string, valeur: number | null): string {
     if (valeur === null) {
       return 'aucune';
+    }
+    if (code === 'RADIATION') {
+      if (valeur > 1.5) {
+        return 'critique';
+      }
+      if (valeur >= 0.5) {
+        return 'attention';
+      }
+      return 'normal';
     }
     const p = this.parametres.find(x => x.code === code);
     if (!p) {

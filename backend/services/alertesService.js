@@ -34,6 +34,12 @@ function obtenirRecommandation(niveau, code) {
             texte: 'Prenez du repos et surveillez votre etat de sante.'
         };
     }
+    if (code === 'RADIATION') {
+        return {
+            type: 'protection_radiation',
+            texte: 'Rejoignez le module blindé anti-radiations et réduisez les sorties extravéhiculaires.'
+        };
+    }
     return {
         type: 'nouvelle_mesure',
         texte: 'Effectuez une nouvelle mesure pour verifier cette valeur.'

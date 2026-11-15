@@ -40,14 +40,34 @@
     <section class="cartes">
       @for (c of cartes(); track c.code) {
         <div [class]="'carte-mesure ' + c.etat">
-          <p class="label">{{ c.label }}</p>
+          <div class="carte-entete">
+            <span class="label">{{ c.label }}</span>
+            <span [class]="'badge ' + c.etat">{{ c.etat === 'aucune' ? 'no data' : c.etat }}</span>
+          </div>
           <p class="valeur">
             {{ c.valeur !== null ? c.valeur : '—' }}
             @if (c.valeur !== null) {
               <span class="unite">{{ c.unite }}</span>
             }
           </p>
-          <span [class]="'badge ' + c.etat">{{ c.etat === 'aucune' ? 'no data' : c.etat }}</span>
+
+          @if (c.code === 'RADIATION' && c.valeur !== null) {
+            <div class="jauge-radiation" title="Radiation dose gauge (CSA / NASA HRP)">
+              <div class="jauge-piste">
+                <div [class]="'jauge-remplissage ' + c.etat" [style.width.%]="c.pourcentageJauge"></div>
+              </div>
+              <div class="jauge-echelle">
+                <span>0</span>
+                <span class="seuil-repere" title="Normal: < 0.5 mSv/j">0.5</span>
+                <span class="seuil-repere" title="Critical: > 1.5 mSv/j">1.5</span>
+                <span>2.0+</span>
+              </div>
+            </div>
+          }
+
+          <div class="badge-hazard" [title]="c.hazardBadge">
+            {{ c.hazardBadge }}
+          </div>
         </div>
       }
     </section>

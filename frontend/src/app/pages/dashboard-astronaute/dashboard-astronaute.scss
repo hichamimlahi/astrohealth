@@ -80,8 +80,12 @@ nav a.actif {
 
 .cartes {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
+
+  @media (min-width: 1280px) {
+    grid-template-columns: repeat(5, 1fr);
+  }
 }
 
 .carte-mesure {
@@ -89,6 +93,26 @@ nav a.actif {
   background: var(--carte);
   border: 1px solid var(--bordure);
   border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.carte-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  .label {
+    margin: 0;
+  }
+
+  .badge {
+    flex-shrink: 0;
+  }
 }
 
 .label {
@@ -108,6 +132,65 @@ nav a.actif {
   font-size: 14px;
   font-weight: normal;
   color: var(--texte-secondaire);
+}
+
+.jauge-radiation {
+  margin: 10px 0 14px;
+
+  .jauge-piste {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .jauge-remplissage {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease, background-color 0.3s ease;
+
+    &.normal {
+      background: var(--vert);
+    }
+
+    &.attention {
+      background: var(--orange);
+    }
+
+    &.critique {
+      background: var(--rouge);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+    }
+  }
+
+  .jauge-echelle {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--texte-secondaire);
+    margin-top: 4px;
+
+    .seuil-repere {
+      opacity: 0.85;
+    }
+  }
+}
+
+.badge-hazard {
+  margin-top: auto;
+  padding: 6px 10px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--texte-secondaire);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  word-break: break-word;
 }
 
 .badge {
@@ -225,10 +308,18 @@ nav a.actif {
 
 .carte-mesure.attention {
   border-color: var(--orange);
+
+  .badge-hazard {
+    border-color: rgba(245, 158, 11, 0.35);
+  }
 }
 
 .carte-mesure.critique {
   border-color: var(--rouge);
+
+  .badge-hazard {
+    border-color: rgba(239, 68, 68, 0.45);
+  }
 }
 
 .carte-reco.attention {
