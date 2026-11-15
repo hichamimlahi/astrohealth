@@ -42,6 +42,24 @@ export interface EnvironnementMission {
   icone: string;
 }
 
+export interface OrganeScanner {
+  id: 'cerveau' | 'coeur' | 'poumons' | 'cellules';
+  nom: string;
+  icone: string;
+  constanteAssociee: string;
+  valeurActuelle: string;
+  unite: string;
+  etat: 'normal' | 'attention' | 'critique';
+  dangerNasa: string;
+  rolePhysio: string;
+  impactSpatial: string;
+  recommandation: string;
+  position3D: [number, number, number];
+  screenX: number;
+  screenY: number;
+  visible: boolean;
+}
+
 @Component({
   selector: 'app-dashboard-astronaute',
   imports: [RouterLink, Urgence],
@@ -89,6 +107,82 @@ export class DashboardAstronaute implements AfterViewInit {
   scenarioActif = signal<string>('');
 
   guideActif = signal<string | null>(null);
+
+  isBrowser = signal(false);
+  autoRotationActive = signal(true);
+
+  organes = signal<OrganeScanner[]>([
+    {
+      id: 'cerveau',
+      nom: 'Cerveau & Système Neuro-Cognitif',
+      icone: '🧠',
+      constanteAssociee: 'Sommeil / Humeur',
+      valeurActuelle: '7.5 h',
+      unite: 'heures',
+      etat: 'normal',
+      dangerNasa: 'Isolement & Confinement',
+      rolePhysio: 'Coordination centrale, cognition, mémoire et régulation neuro-végétative circadienne.',
+      impactSpatial: 'L’isolement et les 16 levers de soleil/sol dérèglent l’horloge circadienne. La redistribution liquidienne céphalique génère une hausse de pression intracrânienne (syndrome SANS).',
+      recommandation: 'Maintenir 8h de repos nocturne avec masque occultant. Session de relaxation guidée avec l’Assistant SahtHealth et luminothérapie bleue au réveil.',
+      position3D: [0, 1.58, 0.08],
+      screenX: 0,
+      screenY: 0,
+      visible: true
+    },
+    {
+      id: 'coeur',
+      nom: 'Système Cardiovasculaire & Hémodynamique',
+      icone: '❤️',
+      constanteAssociee: 'Fréquence Cardiaque & Pression Artérielle',
+      valeurActuelle: '72 bpm',
+      unite: 'bpm',
+      etat: 'normal',
+      dangerNasa: 'Gravité Altérée (Microgravité & G-Forces)',
+      rolePhysio: 'Irrigation tissulaire systémique, oxygénation des organes vitaux et transport des nutriments.',
+      impactSpatial: 'Suppression du gradient hydrostatique : déplacement céphalique des fluides (Puffy Face), baisse du volume plasmatique circulant (-15%) et atrophie myocardique sans contrainte gravitationnelle.',
+      recommandation: '2h30 d’entraînement quotidien obligatoire (tapis roulant T2 avec harnais et ergocycle CEVIS). Protocole de réhydratation électrolytique avant rentrée atmosphérique.',
+      position3D: [-0.10, 1.15, 0.16],
+      screenX: 0,
+      screenY: 0,
+      visible: true
+    },
+    {
+      id: 'poumons',
+      nom: 'Système Respiratoire & Échanges Gazeux',
+      icone: '🫁',
+      constanteAssociee: 'Oxymétrie SpO2 & Fréquence Respiratoire',
+      valeurActuelle: '98 %',
+      unite: '%',
+      etat: 'normal',
+      dangerNasa: 'Environnement Clos & Hostile (Cabine Pressurisée)',
+      rolePhysio: 'Hématose alvéolaire, absorption d’oxygène et élimination du dioxyde de carbone métabolique.',
+      impactSpatial: 'L’absence de convection thermique naturelle favorise la formation de bulles stagnantes de CO2 toxiques autour de l’astronaute au repos. Risque d’hypoxie silencieuse si l’ECLSS dévie.',
+      recommandation: 'Vérifier la ventilation forcée des sas. En cas de chute de SpO2 < 92 %, chausser immédiatement le masque O2 d’urgence et lancer le diagnostic environnemental SahtHealth.',
+      position3D: [0.10, 1.16, 0.15],
+      screenX: 0,
+      screenY: 0,
+      visible: true
+    },
+    {
+      id: 'cellules',
+      nom: 'Cellules, Métabolisme & Intégrité ADN',
+      icone: '☢️',
+      constanteAssociee: 'Dosimétrie Rayonnement CSA & Biomarqueurs',
+      valeurActuelle: '0.15 mSv/j',
+      unite: 'mSv/jour',
+      etat: 'normal',
+      dangerNasa: 'Radiation Spatiale (Rayons Cosmiques GCR & Éruptions SPE)',
+      rolePhysio: 'Préservation de l’intégrité du génome, renouvellement cellulaire et homéostasie immunitaire.',
+      impactSpatial: 'Hors du bouclier géomagnétique terrestre, les ions lourds HZE et protons solaires provoquent des cassures double-brin de l’ADN, un stress oxydatif aigu et un risque oncologique accru.',
+      recommandation: 'Si la dose dépasse 0.5 mSv/j, limiter les sorties EVA. Si alerte tempête solaire (> 1.5 mSv/j), rejoindre sans délai le sas central blindé (Storm Shelter) et ingérer les antioxydants.',
+      position3D: [0, 0.72, 0.14],
+      screenX: 0,
+      screenY: 0,
+      visible: true
+    }
+  ]);
+
+  organeSelectionne = signal<OrganeScanner | null>(null);
 
   routineTaches = signal<TacheRoutine[]>([
     { id: 'cardio', libelle: 'Contrôle Cardiovasculaire (FC & TA)', fait: true, icone: '🫀' },
@@ -186,6 +280,29 @@ export class DashboardAstronaute implements AfterViewInit {
   @ViewChild('graphiqueFc') graphiqueFc!: ElementRef<HTMLCanvasElement>;
   @ViewChild('graphiqueSpo2') graphiqueSpo2!: ElementRef<HTMLCanvasElement>;
   @ViewChild(Urgence) composantUrgence?: Urgence;
+  @ViewChild('scannerContainer') scannerContainer?: ElementRef<HTMLDivElement>;
+  @ViewChild('canvas3d') canvas3d?: ElementRef<HTMLCanvasElement>;
+
+  private scene?: any;
+  private camera?: any;
+  private renderer?: any;
+  private animFrameId?: number;
+  private bodyGroup?: any;
+  private scanRing?: any;
+  private organMeshes: { [key: string]: any } = {};
+
+  private isDragging = false;
+  private previousMousePosition = { x: 0, y: 0 };
+  private targetRotationY = 0;
+  private currentRotationY = 0;
+
+  constructor() {
+    this.isBrowser.set(isPlatformBrowser(this.platformId));
+    this.organeSelectionne.set(this.organes()[1]);
+    this.destroyRef.onDestroy(() => {
+      this.nettoyerScanner3D();
+    });
+  }
 
   @HostListener('window:keydown', ['$event'])
   surToucheClavier(event: KeyboardEvent) {
@@ -220,6 +337,12 @@ export class DashboardAstronaute implements AfterViewInit {
     this.graphFc = this.creerGraphique(this.graphiqueFc, 'Heart rate (bpm)', 40, 120);
     this.graphSpo2 = this.creerGraphique(this.graphiqueSpo2, 'SpO2 (%)', 85, 100);
     this.demarrerChargement();
+
+    if (this.isBrowser()) {
+      setTimeout(() => {
+        this.initialiserScanner3D();
+      }, 80);
+    }
   }
 
   toggleGuide(code: string) {
@@ -382,6 +505,7 @@ export class DashboardAstronaute implements AfterViewInit {
       };
     });
     this.cartes.set(cartes);
+    this.actualiserOrganes();
 
     const mesAlertes = d.alertes.filter(a => a.id_astronaute === this.idAstronaute);
     const alerte = mesAlertes.length > 0 ? mesAlertes[0] : null;
@@ -519,5 +643,396 @@ export class DashboardAstronaute implements AfterViewInit {
 
   ajouterMessage(auteur: string, texte: string, mode: string) {
     this.messages.update(liste => [...liste, { auteur: auteur, texte: texte, mode: mode }]);
+  }
+
+  selectionnerOrgane(org: OrganeScanner) {
+    this.organeSelectionne.set(org);
+    this.targetRotationY = 0;
+  }
+
+  fermerFicheOrgane() {
+    this.organeSelectionne.set(null);
+  }
+
+  definirVue(angle: number) {
+    this.autoRotationActive.set(false);
+    this.targetRotationY = angle;
+  }
+
+  basculerAutoRotation() {
+    this.autoRotationActive.update(v => !v);
+  }
+
+  actualiserOrganes() {
+    const cartes = this.cartes();
+    const cSommeil = cartes.find(c => c.code === 'SOMMEIL');
+    const cFc = cartes.find(c => c.code === 'FC');
+    const cSpo2 = cartes.find(c => c.code === 'SPO2');
+    const cRad = cartes.find(c => c.code === 'RADIATION');
+
+    this.organes.update(liste =>
+      liste.map(org => {
+        let etat: 'normal' | 'attention' | 'critique' = 'normal';
+        let val = org.valeurActuelle;
+
+        if (org.id === 'cerveau') {
+          if (cSommeil) {
+            etat = (cSommeil.etat === 'critique' ? 'critique' : (cSommeil.etat === 'attention' ? 'attention' : 'normal'));
+            val = cSommeil.valeur !== null ? `${cSommeil.valeur} h` : '—';
+          }
+        } else if (org.id === 'coeur') {
+          if (cFc) {
+            etat = (cFc.etat === 'critique' ? 'critique' : (cFc.etat === 'attention' ? 'attention' : 'normal'));
+            val = cFc.valeur !== null ? `${cFc.valeur} bpm` : '—';
+          }
+        } else if (org.id === 'poumons') {
+          if (cSpo2) {
+            etat = (cSpo2.etat === 'critique' ? 'critique' : (cSpo2.etat === 'attention' ? 'attention' : 'normal'));
+            val = cSpo2.valeur !== null ? `${cSpo2.valeur} %` : '—';
+          }
+        } else if (org.id === 'cellules') {
+          if (cRad) {
+            etat = (cRad.etat === 'critique' ? 'critique' : (cRad.etat === 'attention' ? 'attention' : 'normal'));
+            val = cRad.valeur !== null ? `${cRad.valeur} mSv/j` : '—';
+          }
+        }
+
+        return {
+          ...org,
+          valeurActuelle: val,
+          etat: etat
+        };
+      })
+    );
+
+    const actif = this.organeSelectionne();
+    if (actif) {
+      const maj = this.organes().find(o => o.id === actif.id);
+      if (maj) {
+        this.organeSelectionne.set(maj);
+      }
+    }
+
+    this.mettreAJourCouleursHotspots3D();
+  }
+
+  mettreAJourCouleursHotspots3D() {
+    const hexCouleurs = {
+      normal: 0x22c55e,
+      attention: 0xf59e0b,
+      critique: 0xef4444
+    };
+
+    for (const org of this.organes()) {
+      const mesh = this.organMeshes[org.id];
+      if (mesh && mesh.material) {
+        const col = hexCouleurs[org.etat] || 0x22c55e;
+        mesh.material.color.setHex(col);
+      }
+    }
+  }
+
+  async initialiserScanner3D() {
+    if (!this.isBrowser() || !this.canvas3d || !this.scannerContainer) {
+      return;
+    }
+    const THREE = await import('three');
+    const container = this.scannerContainer.nativeElement;
+    const canvas = this.canvas3d.nativeElement;
+
+    const width = container.clientWidth || 480;
+    const height = container.clientHeight || 420;
+
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+    this.camera.position.set(0, 0.9, 3.8);
+
+    this.renderer = new THREE.WebGLRenderer({
+      canvas: canvas,
+      alpha: true,
+      antialias: true,
+      powerPreference: 'high-performance'
+    });
+    this.renderer.setSize(width, height);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const ambientLight = new THREE.AmbientLight(0x06b6d4, 1.2);
+    this.scene.add(ambientLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0x38bdf8, 2.0);
+    dirLight1.position.set(2, 4, 3);
+    this.scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0x3b82f6, 1.5);
+    dirLight2.position.set(-2, -1, -2);
+    this.scene.add(dirLight2);
+
+    this.bodyGroup = new THREE.Group();
+    this.scene.add(this.bodyGroup);
+
+    const gridHelper = new THREE.GridHelper(3.2, 12, 0x06b6d4, 0x1e293b);
+    gridHelper.position.y = -0.75;
+    this.scene.add(gridHelper);
+
+    const ringGeo1 = new THREE.RingGeometry(0.8, 0.85, 48);
+    const ringMat1 = new THREE.MeshBasicMaterial({ color: 0x06b6d4, side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
+    const ring1 = new THREE.Mesh(ringGeo1, ringMat1);
+    ring1.rotation.x = Math.PI / 2;
+    ring1.position.y = -0.74;
+    this.scene.add(ring1);
+
+    const scanRingGeo = new THREE.RingGeometry(0.7, 0.76, 48);
+    const scanRingMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.75 });
+    this.scanRing = new THREE.Mesh(scanRingGeo, scanRingMat);
+    this.scanRing.rotation.x = Math.PI / 2;
+    this.scene.add(this.scanRing);
+
+    this.construireAstronaute3D(THREE);
+    this.creerHotspots3D(THREE);
+    this.attacherControles3D(canvas);
+
+    const tempV = new THREE.Vector3();
+    const animer = (temps: number) => {
+      this.animFrameId = requestAnimationFrame(animer);
+
+      if (this.autoRotationActive() && !this.isDragging) {
+        this.currentRotationY += 0.008;
+      } else {
+        this.currentRotationY += (this.targetRotationY - this.currentRotationY) * 0.1;
+      }
+      if (this.bodyGroup) {
+        this.bodyGroup.rotation.y = this.currentRotationY;
+      }
+
+      if (this.scanRing) {
+        const scanY = 0.5 + 1.2 * Math.sin(temps * 0.0018);
+        this.scanRing.position.y = scanY;
+      }
+
+      const pulse = 1 + 0.18 * Math.sin(temps * 0.006);
+      for (const key in this.organMeshes) {
+        const mesh = this.organMeshes[key];
+        if (mesh) {
+          mesh.scale.set(pulse, pulse, pulse);
+        }
+      }
+
+      if (container && this.camera) {
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        for (const org of this.organes()) {
+          const mesh = this.organMeshes[org.id];
+          if (!mesh) continue;
+          mesh.getWorldPosition(tempV);
+          tempV.project(this.camera);
+          const x = Math.round(((tempV.x + 1) * w) / 2);
+          const y = Math.round(((-tempV.y + 1) * h) / 2);
+          const el = document.getElementById('hotspot-' + org.id);
+          if (el) {
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            el.style.display = tempV.z < 1 ? 'flex' : 'none';
+          }
+        }
+      }
+
+      if (this.renderer && this.scene && this.camera) {
+        this.renderer.render(this.scene, this.camera);
+      }
+    };
+
+    this.animFrameId = requestAnimationFrame(animer);
+
+    const redimensionner = () => {
+      if (!container || !this.renderer || !this.camera) return;
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      this.camera.aspect = w / h;
+      this.camera.updateProjectionMatrix();
+      this.renderer.setSize(w, h);
+    };
+    window.addEventListener('resize', redimensionner);
+    this.destroyRef.onDestroy(() => {
+      window.removeEventListener('resize', redimensionner);
+    });
+  }
+
+  private construireAstronaute3D(THREE: any) {
+    const suitWireMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.7
+    });
+
+    const suitSolidMat = new THREE.MeshStandardMaterial({
+      color: 0x091e3a,
+      transparent: true,
+      opacity: 0.82,
+      roughness: 0.35,
+      metalness: 0.7
+    });
+
+    const visorMat = new THREE.MeshStandardMaterial({
+      color: 0x06b6d4,
+      roughness: 0.1,
+      metalness: 0.9,
+      transparent: true,
+      opacity: 0.92
+    });
+
+    const addSegment = (geo: any, x: number, y: number, z: number, rx = 0, ry = 0, rz = 0) => {
+      const meshSolid = new THREE.Mesh(geo, suitSolidMat);
+      meshSolid.position.set(x, y, z);
+      meshSolid.rotation.set(rx, ry, rz);
+      this.bodyGroup.add(meshSolid);
+
+      const meshWire = new THREE.Mesh(geo, suitWireMat);
+      meshWire.position.set(x, y, z);
+      meshWire.rotation.set(rx, ry, rz);
+      meshWire.scale.set(1.02, 1.02, 1.02);
+      this.bodyGroup.add(meshWire);
+      return meshSolid;
+    };
+
+    // 1. Helmet & Visor
+    const helmetGeo = new THREE.SphereGeometry(0.24, 20, 20);
+    addSegment(helmetGeo, 0, 1.58, 0);
+
+    const visorGeo = new THREE.SphereGeometry(0.21, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.45);
+    const visorMesh = new THREE.Mesh(visorGeo, visorMat);
+    visorMesh.rotation.x = Math.PI * 0.4;
+    visorMesh.position.set(0, 1.59, 0.08);
+    this.bodyGroup.add(visorMesh);
+
+    // 2. Torso
+    const torsoGeo = new THREE.CylinderGeometry(0.27, 0.22, 0.65, 16);
+    addSegment(torsoGeo, 0, 1.12, 0);
+
+    // 3. Backpack PLSS
+    const backpackGeo = new THREE.BoxGeometry(0.40, 0.55, 0.18);
+    addSegment(backpackGeo, 0, 1.18, -0.22);
+
+    // 4. Pelvis
+    const pelvisGeo = new THREE.CylinderGeometry(0.22, 0.19, 0.22, 16);
+    addSegment(pelvisGeo, 0, 0.72, 0);
+
+    // 5. Shoulders
+    const shoulderGeo = new THREE.SphereGeometry(0.09, 12, 12);
+    addSegment(shoulderGeo, -0.34, 1.34, 0);
+    addSegment(shoulderGeo, 0.34, 1.34, 0);
+
+    // 6. Arms
+    const armGeo = new THREE.CylinderGeometry(0.075, 0.07, 0.32, 12);
+    addSegment(armGeo, -0.40, 1.05, 0, 0, 0, 0.15);
+    addSegment(armGeo, 0.40, 1.05, 0, 0, 0, -0.15);
+
+    const forearmGeo = new THREE.CylinderGeometry(0.068, 0.06, 0.30, 12);
+    addSegment(forearmGeo, -0.43, 0.75, 0.04, 0.15, 0, 0.18);
+    addSegment(forearmGeo, 0.43, 0.75, 0.04, 0.15, 0, -0.18);
+
+    // 7. Thighs
+    const thighGeo = new THREE.CylinderGeometry(0.105, 0.085, 0.42, 14);
+    addSegment(thighGeo, -0.15, 0.38, 0);
+    addSegment(thighGeo, 0.15, 0.38, 0);
+
+    // 8. Knees
+    const kneeGeo = new THREE.SphereGeometry(0.085, 12, 12);
+    addSegment(kneeGeo, -0.15, 0.12, 0.02);
+    addSegment(kneeGeo, 0.15, 0.12, 0.02);
+
+    // 9. Shins
+    const shinGeo = new THREE.CylinderGeometry(0.085, 0.075, 0.40, 14);
+    addSegment(shinGeo, -0.15, -0.18, 0);
+    addSegment(shinGeo, 0.15, -0.18, 0);
+
+    // 10. Boots
+    const bootGeo = new THREE.BoxGeometry(0.15, 0.14, 0.25);
+    addSegment(bootGeo, -0.15, -0.45, 0.05);
+    addSegment(bootGeo, 0.15, -0.45, 0.05);
+  }
+
+  private creerHotspots3D(THREE: any) {
+    const hexCouleurs = {
+      normal: 0x22c55e,
+      attention: 0xf59e0b,
+      critique: 0xef4444
+    };
+
+    for (const org of this.organes()) {
+      const sphereGeo = new THREE.SphereGeometry(0.065, 16, 16);
+      const sphereMat = new THREE.MeshBasicMaterial({
+        color: hexCouleurs[org.etat] || 0x22c55e,
+        wireframe: false
+      });
+      const mesh = new THREE.Mesh(sphereGeo, sphereMat);
+      mesh.position.set(org.position3D[0], org.position3D[1], org.position3D[2]);
+
+      const haloGeo = new THREE.RingGeometry(0.08, 0.11, 24);
+      const haloMat = new THREE.MeshBasicMaterial({
+        color: hexCouleurs[org.etat] || 0x22c55e,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.7
+      });
+      const haloMesh = new THREE.Mesh(haloGeo, haloMat);
+      haloMesh.rotation.x = Math.PI / 4;
+      mesh.add(haloMesh);
+
+      this.bodyGroup.add(mesh);
+      this.organMeshes[org.id] = mesh;
+    }
+  }
+
+  private attacherControles3D(canvas: HTMLCanvasElement) {
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      this.isDragging = true;
+      const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
+      this.previousMousePosition = { x: clientX, y: clientY };
+    };
+
+    const onPointerMove = (e: MouseEvent | TouchEvent) => {
+      if (!this.isDragging) return;
+      const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
+      const deltaX = clientX - this.previousMousePosition.x;
+      this.targetRotationY += deltaX * 0.012;
+      this.previousMousePosition = { x: clientX, y: clientY };
+    };
+
+    const onPointerUp = () => {
+      this.isDragging = false;
+    };
+
+    canvas.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerUp);
+
+    canvas.addEventListener('touchstart', onPointerDown, { passive: true });
+    window.addEventListener('touchmove', onPointerMove, { passive: true });
+    window.addEventListener('touchend', onPointerUp);
+
+    this.destroyRef.onDestroy(() => {
+      canvas.removeEventListener('mousedown', onPointerDown);
+      window.removeEventListener('mousemove', onPointerMove);
+      window.removeEventListener('mouseup', onPointerUp);
+      canvas.removeEventListener('touchstart', onPointerDown);
+      window.removeEventListener('touchmove', onPointerMove);
+      window.removeEventListener('touchend', onPointerUp);
+    });
+  }
+
+  private nettoyerScanner3D() {
+    if (this.animFrameId) {
+      cancelAnimationFrame(this.animFrameId);
+    }
+    if (this.renderer) {
+      this.renderer.dispose();
+    }
+    this.scene = undefined;
+    this.camera = undefined;
+    this.renderer = undefined;
+    this.bodyGroup = undefined;
   }
 }

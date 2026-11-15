@@ -171,6 +171,129 @@
       }
     </section>
 
+    <section class="section-scanner-3d">
+      <div class="scanner-3d-entete">
+        <div class="scanner-3d-titre-bloc">
+          <span class="scanner-icone">🧬</span>
+          <div>
+            <h3>Scanner Biométrique 3D de l'Astronaute <span class="badge-tech">HOLOGRAPHIC BIO-TWIN</span></h3>
+            <p class="scanner-description">Visualisation spatiale 360° en temps réel — Hotspots d'organes synchronisés avec les alertes et constantes médicales.</p>
+          </div>
+        </div>
+        <div class="scanner-statut-global">
+          <span class="pastille-sync">🟢</span> Modèle Biomécanique Synchronisé (4 Organes)
+        </div>
+      </div>
+
+      @if (isBrowser()) {
+        <div class="scanner-3d-corps">
+          <div #scannerContainer class="scanner-3d-viewport">
+            <canvas #canvas3d class="scanner-canvas"></canvas>
+
+            @for (org of organes(); track org.id) {
+              <div [id]="'hotspot-' + org.id" class="hotspot-3d" [class]="org.etat" [class.actif]="organeSelectionne()?.id === org.id" (click)="selectionnerOrgane(org)" [title]="org.nom + ' : ' + org.valeurActuelle">
+                <span class="hotspot-pulse" [class]="org.etat"></span>
+                <span class="hotspot-point" [class]="org.etat">{{ org.icone }}</span>
+                <span class="hotspot-etiquette" [class]="org.etat">
+                  <span class="nom">{{ org.nom.split('&')[0].trim() }}</span>
+                  <span class="val">{{ org.valeurActuelle }}</span>
+                </span>
+              </div>
+            }
+
+            <div class="scanner-3d-controles">
+              <div class="controles-groupe">
+                <button type="button" class="btn-ctrl" (click)="definirVue(0)" title="Vue de Face">Face</button>
+                <button type="button" class="btn-ctrl" (click)="definirVue(1.57)" title="Vue de Profil">Profil</button>
+                <button type="button" class="btn-ctrl" (click)="definirVue(3.14)" title="Vue de Dos">Dos</button>
+                <button type="button" class="btn-ctrl" (click)="basculerAutoRotation()" [class.actif]="autoRotationActive()" title="Rotation automatique à 360°">
+                  🔄 360° {{ autoRotationActive() ? 'ON' : 'OFF' }}
+                </button>
+              </div>
+              <div class="indication-drag">
+                🖱️ Glisser pour faire pivoter le modèle
+              </div>
+            </div>
+          </div>
+
+          <div class="scanner-3d-panneau-lateral">
+            <div class="organes-liste-rapide">
+              <div class="liste-rapide-titre">Organes Vitaux Cliquables :</div>
+              <div class="organes-grille-boutons">
+                @for (org of organes(); track org.id) {
+                  <button type="button" class="btn-organe-pilule" [class]="org.etat" [class.actif]="organeSelectionne()?.id === org.id" (click)="selectionnerOrgane(org)">
+                    <span class="pastille-etat" [class]="org.etat"></span>
+                    <span class="org-ico">{{ org.icone }}</span>
+                    <div class="org-infos">
+                      <span class="org-nom">{{ org.nom.split('&')[0].trim() }}</span>
+                      <span class="org-valeur">{{ org.valeurActuelle }}</span>
+                    </div>
+                  </button>
+                }
+              </div>
+            </div>
+
+            @if (organeSelectionne(); as org) {
+              <div class="fiche-organe-panneau">
+                <div class="fiche-entete">
+                  <div class="fiche-titre">
+                    <span class="fiche-icone">{{ org.icone }}</span>
+                    <div>
+                      <h4>{{ org.nom }}</h4>
+                      <span class="fiche-constante">Télémétrie : {{ org.constanteAssociee }}</span>
+                    </div>
+                  </div>
+                  <button type="button" class="btn-fermer-fiche" (click)="fermerFicheOrgane()" title="Fermer la fiche">✕</button>
+                </div>
+
+                <div class="fiche-statut-ligne">
+                  <div class="fiche-statut-badge" [class]="org.etat">
+                    Statut : {{ org.etat }}
+                  </div>
+                  <div class="fiche-valeur">
+                    Mesure : <strong>{{ org.valeurActuelle }}</strong>
+                  </div>
+                </div>
+
+                <div class="fiche-section">
+                  <div class="fiche-section-label">🪐 Danger Spatial NASA HRP :</div>
+                  <div class="fiche-badge-danger">{{ org.dangerNasa }}</div>
+                </div>
+
+                <div class="fiche-section">
+                  <div class="fiche-section-label">🧬 Rôle Physiologique :</div>
+                  <p class="fiche-texte">{{ org.rolePhysio }}</p>
+                </div>
+
+                <div class="fiche-section">
+                  <div class="fiche-section-label">🚀 Impact Spécifique Microgravité & Espace :</div>
+                  <p class="fiche-texte">{{ org.impactSpatial }}</p>
+                </div>
+
+                <div class="fiche-section reco" [class]="org.etat">
+                  <div class="fiche-section-label">🛡️ Action Préventive & Recommandation :</div>
+                  <p class="fiche-texte">{{ org.recommandation }}</p>
+                </div>
+              </div>
+            } @else {
+              <div class="fiche-placeholder">
+                <div class="placeholder-icone">👆</div>
+                <div class="placeholder-titre">Sélectionnez un organe vital</div>
+                <p class="placeholder-description">
+                  Cliquez sur un hotspot 3D du corps ou sur l'un des organes ci-dessus pour inspecter son statut biométrique, ses constantes et ses risques spatiaux NASA HRP.
+                </p>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="scanner-3d-chargement">
+          <div class="scanner-spinner"></div>
+          <p>Initialisation du scanner biométrique 3D...</p>
+        </div>
+      }
+    </section>
+
     <section class="graphiques">
       <div class="carte-graphique">
         <h3>Heart rate - latest measurements</h3>
