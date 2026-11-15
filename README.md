@@ -1,15 +1,15 @@
-# AstroHealth
+# SahtAstro
 
 **Health monitoring and AI assistant for astronauts on space missions.**
-Project of team **OrionX** for the NASA Space Apps Challenge 2026 (Ben Guerir), challenge: *Create Health Monitoring Software for Astronauts on Space Missions*.
+Project of team **SpaceCare Alliance** for the NASA Space Apps Challenge 2026 (Ben Guerir), challenge: *Create Health Monitoring Software for Astronauts on Space Missions*.
 
-> AstroHealth is a prototype. It is **not a medical device**. All data in this repository is simulated, and the alert thresholds are indicative and must be validated by medical professionals.
+> SahtAstro is a prototype. It is **not a medical device**. All data in this repository is simulated, and the alert thresholds are indicative and must be validated by medical professionals.
 
 ---
 
 ## What it does
 
-Astronauts on long missions are far from hospitals, and the link with Earth can be delayed or cut. AstroHealth gives:
+Astronauts on long missions are far from hospitals, and the link with Earth can be delayed or cut. SahtAstro gives:
 
 - **Astronauts** a personal dashboard: current vital signs with a clear status, charts with the normal range, an active alert banner, a simple recommendation, and a chat with an AI assistant.
 - **The ground doctor** a crew overview (status of each astronaut), a table of active alerts, a trends chart with one line per astronaut, a History page (filter by astronaut, parameter and period), and an AI-generated crew summary.
@@ -35,7 +35,7 @@ The screens update in real time: the server pushes `nouvelle_mesure` and `nouvel
 ## Repository structure
 
 ```
-astrohealth/
+SahtAstro/
 ├── backend/     Node.js + Express API (port 3000)
 ├── frontend/    Angular application (port 4200)
 ├── simulator/   Measurement simulator for demos
@@ -56,8 +56,8 @@ astrohealth/
 
 1. Open XAMPP and start **Apache** and **MySQL**.
 2. Open http://localhost/phpmyadmin.
-3. Without selecting any database, click **Import** and import `database/astrohealth_base_complete.sql`. It creates the `astrohealth` database, the 12 tables, the 10 parameters and the 19 default thresholds.
-4. Click the `astrohealth` database, then **Import** and import `database/donnees_demo.sql`. It adds the demo mission, 4 astronauts, measurements, alerts and messages. You can run it again at any time to reset the demo data.
+3. Without selecting any database, click **Import** and import `database/SahtAstro_base_complete.sql`. It creates the `SahtAstro` database, the 12 tables, the 10 parameters and the 19 default thresholds.
+4. Click the `SahtAstro` database, then **Import** and import `database/donnees_demo.sql`. It adds the demo mission, 4 astronauts, measurements, alerts and messages. You can run it again at any time to reset the demo data.
 
 ### 3. Back-end
 
@@ -68,7 +68,7 @@ npm install
 npm start
 ```
 
-The server starts on http://localhost:3000. You should see `server running on port 3000` and `connected to astrohealth database!`.
+The server starts on http://localhost:3000. You should see `server running on port 3000` and `connected to SahtAstro database!`.
 
 The default `.env` values work with XAMPP:
 
@@ -78,7 +78,7 @@ DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=
-DB_NAME=astrohealth
+DB_NAME=SahtAstro
 ```
 
 **AI assistant (optional):** to use a real language model, set `AI_API_KEY` (and, if needed, `AI_MODEL` and `AI_API_URL`) in your `.env` file. Never commit this file. Without a key, the assistant answers in **backup mode** (predefined messages).
@@ -134,9 +134,9 @@ The full specification is in the `docs` folder.
 
 ## NASA resources and data
 
-AstroHealth is a prototype built on **NASA Human Research Program (HRP) resources**. No NASA dataset is imported: these resources guided what we monitor and how we designed the product.
+SahtAstro is a prototype built on **NASA Human Research Program (HRP) resources**. No NASA dataset is imported: these resources guided what we monitor and how we designed the product.
 
-| NASA resource | What we took from it | Where it appears in AstroHealth |
+| NASA resource | What we took from it | Where it appears in SahtAstro |
 |---|---|---|
 | [5 Hazards of Human Spaceflight](https://www.nasa.gov/hrp/hazards/) | Five hazards (space radiation, isolation and confinement, distance from Earth, gravity fields, hostile or closed environments), and the point that hazards can make each other worse | Organization of the monitored parameters and features; an astronaut's status takes the most severe color among all parameters; alerts that work without AI or a link to Earth address "distance from Earth" |
 | [Risks of Human Spaceflight](https://www.nasa.gov/hrp/risks/) | Specific risks linked to the hazards | Risk of Hypoxia: SpO2. Risk of Inadequate Sleep and Irregular Schedules: sleep duration. Risk of Cardiovascular Adaptations: heart rate and blood pressure. Risk of Radiation-Induced Cancers: radiation parameter (data model). Risk of Inadequate Systems Operations Support: AI assistant with a backup mode. Risk of Behavioral Changes and Psychiatric Disorders (stress of space missions): emergency voice mode for an astronaut under high stress |
@@ -162,6 +162,6 @@ Details and the status of each hazard in the application are in `docs/sources-na
 - Personal baselines per astronaut and weekly summaries for the medical team.
 - Validation of thresholds with medical professionals.
 
-## Team OrionX
+## Team SpaceCare Alliance
 
 ABBOU Aimrane (Team Owner), Sara Sedki,hajar en-neyah , hicham imlahi, Hamza Koujili
