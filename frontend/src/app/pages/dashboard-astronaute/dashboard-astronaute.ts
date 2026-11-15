@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
 import { Subject, forkJoin, merge, timer, of, switchMap, catchError } from 'rxjs';
 import { SocketService } from '../../services/socket.service';
+import { Urgence } from './urgence';
 import { ApiService, Alerte, Astronaute, MesureRecente, Parametre } from '../../services/api.service';
 
 Chart.register(...registerables);
@@ -19,7 +20,7 @@ interface CarteMesure {
 
 @Component({
   selector: 'app-dashboard-astronaute',
-  imports: [RouterLink],
+  imports: [RouterLink, Urgence],
   templateUrl: './dashboard-astronaute.html',
   styleUrl: './dashboard-astronaute.scss'
 })

@@ -359,3 +359,32 @@ nav a {
   color: var(--accent);
   cursor: pointer;
 }
+
+.bandeau-urgence {
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 2px solid var(--rouge);
+  color: #FFFFFF;
+}
+
+.bandeau-urgence .titre-urgence {
+  display: flex;
+  justify-content: space-between;
+  color: var(--rouge);
+}
+
+.bandeau-urgence p {
+  margin: 10px 0;
+  font-size: 18px;
+}
+
+.bandeau-urgence button {
+  padding: 6px 14px;
+  border: 1px solid #FFFFFF;
+  border-radius: 8px;
+  background: transparent;
+  color: #FFFFFF;
+  cursor: pointer;
+}

@@ -76,6 +76,8 @@
     <p class="avertissement">AI assistant is not a substitute for a doctor.</p>
   </main>
 
+  <app-urgence [idAstronaute]="idAstronaute" />
+
   <button class="bouton-chat" (click)="ouvrirFermerChat()">💬</button>
 
   @if (chatOuvert) {
