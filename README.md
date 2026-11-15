@@ -16,6 +16,8 @@ Astronauts on long missions are far from hospitals, and the link with Earth can 
 - **Automatic alerts:** when a measurement crosses a threshold, the server creates an alert (attention or critical). Alerts come from a **rules engine, not from the AI**: they keep working if the AI service or the link is unavailable.
 - **An AI assistant** that explains measurements and alerts in plain language. It never gives a diagnosis, it receives **no personal data** (no name, e-mail or age), and a warning is always shown. If the AI service is unavailable, a backup mode answers with predefined messages so the application never breaks.
 
+- **An emergency voice mode** for an astronaut under high stress who cannot use the normal screens. The astronaut says a trigger phrase ("emergency", "mayday" or "code red") or taps the red EMERGENCY button. The screen switches to a simple, high-contrast view, the astronaut describes what is happening out loud, the speech is turned into text, and the report is sent straight to the ground doctor, who sees a red banner in real time. If the astronaut stays silent, a report is still sent after 10 seconds, and a "Cancel (false alarm)" button is always available. A text box is the fallback when the microphone is unavailable. The app never gives medical advice in this mode: it only alerts the doctor.
+
 The screens update in real time: the server pushes `nouvelle_mesure` and `nouvelle_alerte` events with Socket.IO, and the screens also refresh every 5 seconds as a safety net.
 
 ## Tech stack
@@ -27,6 +29,7 @@ The screens update in real time: the server pushes `nouvelle_mesure` and `nouvel
 | Database | MySQL / MariaDB (12 tables) |
 | AI assistant | Language model called from the server (any OpenAI-compatible API) |
 | Simulator | Node.js script (no dependency) |
+| Voice input | Web Speech API of the browser (Chrome or Edge) |
 | Design | Figma |
 
 ## Repository structure
@@ -104,6 +107,7 @@ node simulator/simulator.js --scenario=oxygene
 ```
 
 The oxygen level of the first astronaut slowly drops from 98% to 85%: an attention alert, then a critical alert appear on the doctor view. Other options (`--sommeil`, `--cible`, `--interval`, `--dry`) are described in `simulator/README.md`.
+5. Try the **emergency voice mode** in Chrome or Edge: on the astronaut dashboard, click **Voice trigger** (allow the microphone), then say *"emergency, I feel dizzy"*. The emergency screen opens with your words; after 5 seconds of silence the report is sent. Open **Ground Doctor** in another tab to see the red banner. The red **EMERGENCY** button does the same without voice.
 
 ## API overview
 
@@ -119,8 +123,12 @@ The oxygen level of the first astronaut slowly drops from 98% to 85%: an attenti
 | POST | `/api/assistant/resume-equipage` | Generate a crew health summary for the ground doctor |
 | GET | `/api/assistant/historique?id_astronaute=1` | Conversation history of an astronaut |
 | POST | `/api/simulateur/scenario` | Run a built-in demo scenario (`baisse_oxygene` or `normal`) |
+| POST | `/api/urgences` | Send an emergency voice report from an astronaut (`id_astronaute`, `texte`) |
+| GET | `/api/urgences?minutes=60` | Emergency reports of the last minutes, newest first |
 
-Real-time events (Socket.IO): `nouvelle_mesure`, `nouvelle_alerte`.
+Real-time events (Socket.IO): `nouvelle_mesure`, `nouvelle_alerte`, `nouvelle_urgence`.
+
+Emergency reports are stored in the existing `message_ia` table with `role_message = 'urgence'` and `mode = 'urgence'`, so no database change is needed.
 
 The full specification is in the `docs` folder.
 
@@ -131,7 +139,7 @@ AstroHealth is a prototype built on **NASA Human Research Program (HRP) resource
 | NASA resource | What we took from it | Where it appears in AstroHealth |
 |---|---|---|
 | [5 Hazards of Human Spaceflight](https://www.nasa.gov/hrp/hazards/) | Five hazards (space radiation, isolation and confinement, distance from Earth, gravity fields, hostile or closed environments), and the point that hazards can make each other worse | Organization of the monitored parameters and features; an astronaut's status takes the most severe color among all parameters; alerts that work without AI or a link to Earth address "distance from Earth" |
-| [Risks of Human Spaceflight](https://www.nasa.gov/hrp/risks/) | Specific risks linked to the hazards | Risk of Hypoxia: SpO2. Risk of Inadequate Sleep and Irregular Schedules: sleep duration. Risk of Cardiovascular Adaptations: heart rate and blood pressure. Risk of Radiation-Induced Cancers: radiation parameter (data model). Risk of Inadequate Systems Operations Support: AI assistant with a backup mode |
+| [Risks of Human Spaceflight](https://www.nasa.gov/hrp/risks/) | Specific risks linked to the hazards | Risk of Hypoxia: SpO2. Risk of Inadequate Sleep and Irregular Schedules: sleep duration. Risk of Cardiovascular Adaptations: heart rate and blood pressure. Risk of Radiation-Induced Cancers: radiation parameter (data model). Risk of Inadequate Systems Operations Support: AI assistant with a backup mode. Risk of Behavioral Changes and Psychiatric Disorders (stress of space missions): emergency voice mode for an astronaut under high stress |
 | [Ongoing HRP Research in Space](https://www.nasa.gov/hrp/ongoing-hrp-research/) | Artemis II studies on well-being, activity and sleep (ARCHeR) and on a consistent set of health measures (Standard Measures) | Model for wearable-based sleep and activity monitoring and for a consistent set of parameters per astronaut |
 
 Space agency partner resource used as motivation: Canadian Space Agency, [Monitoring Radiation for Astronaut Health](https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp), for tracking radiation exposure.
@@ -150,6 +158,7 @@ Details and the status of each hazard in the application are in `docs/sources-na
 - Replace simulated data with real wearable sensors and radiation dosimeters (a radiation card on the astronaut dashboard is planned).
 - Full offline mode with automatic synchronization when the link with Earth returns. Records already carry a unique identifier and a synchronization flag for this; the synchronization itself is not implemented.
 - An onboard AI model that works without an Internet connection (today the assistant calls an online API and falls back to predefined messages).
+- Onboard speech recognition for the emergency mode. Today it uses the browser's speech service (Chrome sends the audio to an online service, so it needs Internet and works only in Chrome or Edge); the red button and the text box work without it. The trigger phrases are a first version and need tuning against false alarms.
 - Personal baselines per astronaut and weekly summaries for the medical team.
 - Validation of thresholds with medical professionals.
 
