@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, ViewChild, HostListener, AfterViewInit, PLATFORM_ID, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, ViewChild, HostListener, AfterViewInit, PLATFORM_ID, inject, signal, computed } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -10,7 +10,13 @@ import { ApiService, Alerte, Astronaute, MesureRecente, Parametre } from '../../
 
 Chart.register(...registerables);
 
-interface CarteMesure {
+export interface GuideMesure {
+  protocole: string;
+  plageNormale: string;
+  pourquoi: string;
+}
+
+export interface CarteMesure {
   code: string;
   label: string;
   valeur: number | null;
@@ -18,6 +24,14 @@ interface CarteMesure {
   etat: string;
   hazardBadge: string;
   pourcentageJauge?: number;
+  guide: GuideMesure;
+}
+
+export interface TacheRoutine {
+  id: string;
+  libelle: string;
+  fait: boolean;
+  icone: string;
 }
 
 export interface EnvironnementMission {
@@ -74,6 +88,24 @@ export class DashboardAstronaute implements AfterViewInit {
   chargementScenario = signal(false);
   scenarioActif = signal<string>('');
 
+  guideActif = signal<string | null>(null);
+
+  routineTaches = signal<TacheRoutine[]>([
+    { id: 'cardio', libelle: 'Contrôle Cardiovasculaire (FC & TA)', fait: true, icone: '🫀' },
+    { id: 'radiation', libelle: 'Dosimétrie Spatiale (Radiation CSA)', fait: true, icone: '☢️' },
+    { id: 'spo2', libelle: 'Oxymétrie de Pouls (SpO2 & Fréquence)', fait: true, icone: '🫁' },
+    { id: 'sommeil', libelle: 'Auto-évaluation Sommeil & Humeur', fait: false, icone: '😴' }
+  ]);
+
+  readonly progressionRoutine = computed(() => {
+    const taches = this.routineTaches();
+    if (taches.length === 0) {
+      return 0;
+    }
+    const faites = taches.filter(t => t.fait).length;
+    return Math.round((faites / taches.length) * 100);
+  });
+
   nom = signal('');
   cartes = signal<CarteMesure[]>([]);
   alerteActive = signal<Alerte | null>(null);
@@ -93,12 +125,62 @@ export class DashboardAstronaute implements AfterViewInit {
   private graphFc?: Chart;
   private graphSpo2?: Chart;
 
-  private modeleCartes = [
-    { code: 'FC', label: 'Heart rate', hazardBadge: '🪐 Danger NASA : Gravité Altérée (Cardio)' },
-    { code: 'SPO2', label: 'Blood oxygen (SpO2)', hazardBadge: '舱 Danger NASA : Environnement Clos & Hostile' },
-    { code: 'TEMP', label: 'Body temperature', hazardBadge: '舱 Danger NASA : Environnement Clos & Hostile' },
-    { code: 'SOMMEIL', label: 'Sleep last night', hazardBadge: '🧠 Danger NASA : Isolement & Confinement' },
-    { code: 'RADIATION', label: 'Radiation daily dose', hazardBadge: '☢️ Danger NASA : Radiation Spatiale (CSA)' }
+  private modeleCartes: {
+    code: string;
+    label: string;
+    hazardBadge: string;
+    guide: GuideMesure;
+  }[] = [
+    {
+      code: 'FC',
+      label: 'Heart rate',
+      hazardBadge: '🪐 Danger NASA : Gravité Altérée (Cardio)',
+      guide: {
+        protocole: 'Position neutre au repos en microgravité. Évitez caféine et effort 15 min avant. Ajustez le capteur au poignet gauche et restez immobile 60s.',
+        plageNormale: '60 – 100 bpm au repos (tendance à tachycardie modérée au réveil en impesanteur).',
+        pourquoi: 'Gravité altérée : la migration des fluides vers le haut du corps (puffy face) modifie le débit cardiaque et cause un déconditionnement myocardique sans exercice régulier.'
+      }
+    },
+    {
+      code: 'SPO2',
+      label: 'Blood oxygen (SpO2)',
+      hazardBadge: '舱 Danger NASA : Environnement Clos & Hostile',
+      guide: {
+        protocole: 'Placez l’index propre et sec au centre de l’oxymètre optique à impulsions. Maintenez une respiration calme et continue pendant 30 secondes.',
+        plageNormale: '95 % – 100 % (Seuil d’alerte critique d’hypoxie : < 90 %).',
+        pourquoi: 'Environnement clos & hostile : identifie précocement les accumulations locales de CO2 ou une défaillance du système de recyclage d’air ECLSS.'
+      }
+    },
+    {
+      code: 'TEMP',
+      label: 'Body temperature',
+      hazardBadge: '舱 Danger NASA : Environnement Clos & Hostile',
+      guide: {
+        protocole: 'Utilisez le thermomètre infrarouge tympanique (conduit auditif) ou appliquez le patch temporal pendant 5 secondes au repos.',
+        plageNormale: '36.1 °C – 37.2 °C (la température corporelle moyenne en orbite s’élève d’environ +1 °C : Space Fever).',
+        pourquoi: 'Environnement clos : l’absence de convection thermique naturelle en apesanteur complique l’évacuation de chaleur corporelle et masque de potentielles infections.'
+      }
+    },
+    {
+      code: 'SOMMEIL',
+      label: 'Sleep last night',
+      hazardBadge: '🧠 Danger NASA : Isolement & Confinement',
+      guide: {
+        protocole: 'Relevez les heures enregistrées par l’actimètre de couchette ou déclarez vos heures réelles de sommeil réparateur au réveil.',
+        plageNormale: '6.5 h – 8.5 h par période de repos de 24h.',
+        pourquoi: 'Isolement & confinement : 16 levers de soleil par sol perturbent le rythme circadien, provoquant fatigue chronique et baisse de vigilance critique.'
+      }
+    },
+    {
+      code: 'RADIATION',
+      label: 'Radiation daily dose',
+      hazardBadge: '☢️ Danger NASA : Radiation Spatiale (CSA)',
+      guide: {
+        protocole: 'Lecture télémétrique automatique via le dosimètre actif personnel CSA attaché à la combinaison ou à la tenue de bord.',
+        plageNormale: '< 0.5 mSv/jour (Attention : 0.5–1.5 mSv/j, Événement de particules solaires SPE : > 1.5 mSv/j).',
+        pourquoi: 'Radiation spatiale : hors de la magnétosphère terrestre, les rayons cosmiques (GCR) et tempêtes solaires menacent les tissus biologiques et l’ADN.'
+      }
+    }
   ];
 
   @ViewChild('graphiqueFc') graphiqueFc!: ElementRef<HTMLCanvasElement>;
@@ -134,9 +216,47 @@ export class DashboardAstronaute implements AfterViewInit {
       return;
     }
     this.initialiserEnvironnement();
+    this.initialiserRoutine();
     this.graphFc = this.creerGraphique(this.graphiqueFc, 'Heart rate (bpm)', 40, 120);
     this.graphSpo2 = this.creerGraphique(this.graphiqueSpo2, 'SpO2 (%)', 85, 100);
     this.demarrerChargement();
+  }
+
+  toggleGuide(code: string) {
+    this.guideActif.update(actuel => (actuel === code ? null : code));
+  }
+
+  initialiserRoutine() {
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        const sauveg = localStorage.getItem('sahthealth_routine_taches');
+        if (sauveg) {
+          const etats: { id: string; fait: boolean }[] = JSON.parse(sauveg);
+          this.routineTaches.update(taches =>
+            taches.map(t => {
+              const trouve = etats.find(e => e.id === t.id);
+              return trouve ? { ...t, fait: trouve.fait } : t;
+            })
+          );
+        }
+      } catch (e) {
+        console.warn('Storage inaccessible:', e);
+      }
+    }
+  }
+
+  basculerTacheRoutine(id: string) {
+    this.routineTaches.update(taches =>
+      taches.map(t => (t.id === id ? { ...t, fait: !t.fait } : t))
+    );
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        const etats = this.routineTaches().map(t => ({ id: t.id, fait: t.fait }));
+        localStorage.setItem('sahthealth_routine_taches', JSON.stringify(etats));
+      } catch (e) {
+        console.warn('Storage inaccessible:', e);
+      }
+    }
   }
 
   initialiserEnvironnement() {
@@ -257,7 +377,8 @@ export class DashboardAstronaute implements AfterViewInit {
         unite: p ? p.unite : (m.code === 'RADIATION' ? 'mSv/jour' : ''),
         etat: etat,
         hazardBadge: m.hazardBadge,
-        pourcentageJauge: pourcentageJauge
+        pourcentageJauge: pourcentageJauge,
+        guide: m.guide
       };
     });
     this.cartes.set(cartes);

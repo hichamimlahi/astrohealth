@@ -70,11 +70,56 @@
       </div>
     }
 
+    <section class="section-routine">
+      <div class="routine-entete">
+        <div class="routine-titre-bloc">
+          <span class="routine-icone">🎯</span>
+          <div>
+            <h3>Routine Santé de Mission <span class="routine-sous-titre">(Mission Readiness)</span></h3>
+            <p class="routine-description">Directives médicales : complétez votre routine quotidienne pour garantir l'aptitude opérationnelle et EVA.</p>
+          </div>
+        </div>
+        <div class="routine-badges">
+          <span class="badge-streak" title="Série ininterrompue de check-ups quotidiens validés">
+            🔥 Série : 14 Sols consécutifs — Prêt pour EVA
+          </span>
+          <span class="badge-pourcentage" [class.complet]="progressionRoutine() === 100">
+            {{ progressionRoutine() }}% Prêt
+          </span>
+        </div>
+      </div>
+
+      <div class="routine-barre-progression" [title]="'Progression globale : ' + progressionRoutine() + '%'">
+        <div class="routine-progression-fill" [style.width.%]="progressionRoutine()" [class.complet]="progressionRoutine() === 100"></div>
+      </div>
+
+      <div class="routine-taches">
+        @for (tache of routineTaches(); track tache.id) {
+          <label class="tache-item" [class.validee]="tache.fait">
+            <input type="checkbox" [checked]="tache.fait" (change)="basculerTacheRoutine(tache.id)" />
+            <span class="tache-custom-checkbox"></span>
+            <span class="tache-icone">{{ tache.icone }}</span>
+            <span class="tache-texte">{{ tache.libelle }}</span>
+            @if (tache.fait) {
+              <span class="tache-status-badge">Validé</span>
+            } @else {
+              <span class="tache-status-badge a-faire">À faire</span>
+            }
+          </label>
+        }
+      </div>
+    </section>
+
     <section class="cartes">
       @for (c of cartes(); track c.code) {
         <div [class]="'carte-mesure ' + c.etat">
           <div class="carte-entete">
-            <span class="label">{{ c.label }}</span>
+            <div class="label-groupe">
+              <span class="label">{{ c.label }}</span>
+              <button type="button" class="btn-guide-mesure" (click)="toggleGuide(c.code)" [class.actif]="guideActif() === c.code" title="Comment mesurer ce paramètre en microgravité ?">
+                ℹ️ Guide
+              </button>
+            </div>
             <span [class]="'badge ' + c.etat">{{ c.etat === 'aucune' ? 'no data' : c.etat }}</span>
           </div>
           <p class="valeur">
@@ -101,6 +146,27 @@
           <div class="badge-hazard" [title]="c.hazardBadge">
             {{ c.hazardBadge }}
           </div>
+
+          @if (guideActif() === c.code) {
+            <div class="panneau-guide-mesure">
+              <div class="panneau-guide-entete">
+                <span class="guide-tag">📘 Protocole Microgravité</span>
+                <button type="button" class="btn-fermer-guide" (click)="toggleGuide(c.code)" title="Fermer le guide">✕</button>
+              </div>
+              <div class="guide-bloc">
+                <div class="guide-section-titre">🎯 Comment mesurer :</div>
+                <div class="guide-section-texte">{{ c.guide.protocole }}</div>
+              </div>
+              <div class="guide-bloc">
+                <div class="guide-section-titre">📊 Plage normale spatiale :</div>
+                <div class="guide-section-texte plage">{{ c.guide.plageNormale }}</div>
+              </div>
+              <div class="guide-bloc">
+                <div class="guide-section-titre">⚠️ Sécurité NASA HRP :</div>
+                <div class="guide-section-texte">{{ c.guide.pourquoi }}</div>
+              </div>
+            </div>
+          }
         </div>
       }
     </section>
