@@ -1,6 +1,6 @@
 # NASA data and resources used by SILA (team TAMUNT)
 
-> **Important and honest note.** SILA is a prototype. Its measurements are **simulated**: no real astronaut data is used. The NASA and space-agency resources below are the scientific basis for **what SILA monitors and how it is designed**. Rows marked **[TO REVIEW]** have not been read by the team yet: do not claim them in the submission until they are.
+> **Important and honest note.** SILA is a prototype. Its measurements are **simulated**: no real astronaut data is used. The NASA and space-agency resources below are the scientific basis for **what SILA monitors and how it is designed**. 
 
 All resources below are listed on the challenge page of the NASA Space Apps Challenge 2026, under "NASA Data & Resources" and "Space Agency Partner Resources".
 
