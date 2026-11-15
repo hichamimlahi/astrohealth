@@ -211,14 +211,14 @@ export class DashboardAstronaute implements AfterViewInit {
 
   chatOuvert = false;
   enAttente = signal(false);
-  moteurIAActif = signal<string>('Edge AI Local (Ollama)');
+  moteurIAActif = signal<string>('Moteur Déterministe Embarqué');
   badgeMoteurComplet = computed(() => {
     const m = this.moteurIAActif();
     if (m.includes('Ollama') || m.includes('ollama') || m.includes('Edge AI')) {
       return '🛰️ Edge AI Local (Ollama)';
     }
-    if (m.includes('Déterministe') || m.includes('deterministic') || m.includes('Secours')) {
-      return '🛡️ Mode Secours Déterministe';
+    if (m.includes('Déterministe') || m.includes('deterministic') || m.includes('Secours') || m.includes('Embarqué')) {
+      return '🛡️ Moteur Déterministe Embarqué';
     }
     return '☁️ Cloud AI Relay';
   });
@@ -228,7 +228,7 @@ export class DashboardAstronaute implements AfterViewInit {
       auteur: 'assistant',
       texte: 'Hello! I am the Sila medical assistant. Ask me about your vital signs, active alerts, or space hazards.',
       mode: '',
-      engine: 'ollama-local (gemma2:2b)'
+      engine: 'deterministic-fallback'
     }
   ]);
 
@@ -642,9 +642,11 @@ export class DashboardAstronaute implements AfterViewInit {
   }
 
   formaterLabelMoteur(engine: string): string {
-    if (!engine) return 'Edge AI Local (Ollama)';
+    if (!engine) return 'Moteur Déterministe Embarqué';
     if (engine.includes('ollama')) return 'Edge AI Local (Ollama)';
-    if (engine.includes('deterministic') || engine.includes('secours')) return 'Mode Secours Déterministe';
+    if (engine.includes('deterministic') || engine.includes('secours') || engine.includes('Embarqué')) {
+      return 'Moteur Déterministe Embarqué';
+    }
     if (engine.includes('cloud')) return 'Cloud AI Relay';
     return engine;
   }
@@ -672,11 +674,10 @@ export class DashboardAstronaute implements AfterViewInit {
       },
       error: () => {
         const fallbackEngine = 'deterministic-fallback';
-        this.moteurIAActif.set('Mode Secours Déterministe');
+        this.moteurIAActif.set('Moteur Déterministe Embarqué');
         this.ajouterMessage(
           'assistant',
-          'The assistant is not reachable right now. Your latest values are shown on the dashboard. '
-            + 'If an alert is active, rest, re-measure in 10 minutes and contact the ground doctor if it does not improve.',
+          'Sila Autonomous Medical System: Real-time telemetry monitoring remains active. If an alert is in place, rest, ensure proper hydration, and re-assess in 10 minutes.',
           'secours',
           fallbackEngine
         );

@@ -430,7 +430,7 @@
                 @if (m.engine?.includes('ollama')) {
                   <span class="tag-moteur local">🛰️ Edge AI Hors-Ligne : Ollama (gemma2:2b)</span>
                 } @else if (m.engine?.includes('deterministic') || m.mode === 'secours') {
-                  <span class="tag-moteur secours">🛡️ Mode Secours Déterministe</span>
+                  <span class="tag-moteur secours">🛡️ Moteur Déterministe Embarqué (Sila)</span>
                 } @else if (m.engine?.includes('cloud')) {
                   <span class="tag-moteur cloud">☁️ Cloud AI Relay ({{ m.engine }})</span>
                 }
