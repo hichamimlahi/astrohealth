@@ -56,8 +56,8 @@ SILA/
 
 1. Open XAMPP and start **Apache** and **MySQL**.
 2. Open http://localhost/phpmyadmin.
-3. Without selecting any database, click **Import** and import `database/SILA_base_complete.sql`. It creates the `SILA` database, the 12 tables, the 10 parameters and the 19 default thresholds.
-4. Click the `SILA` database, then **Import** and import `database/donnees_demo.sql`. It adds the demo mission, 4 astronauts, measurements, alerts and messages. You can run it again at any time to reset the demo data.
+3. Without selecting any database, click **Import** and import `database/astrohealth_base_complete.sql`. It creates the `astrohealth` database, the 12 tables, the 10 parameters and the 19 default thresholds.
+4. Click the `astrohealth` database, then **Import** and import `database/donnees_demo.sql`. It adds the demo mission, 4 astronauts, measurements, alerts and messages. You can run it again at any time to reset the demo data.
 
 ### 3. Back-end
 
@@ -68,7 +68,7 @@ npm install
 npm start
 ```
 
-The server starts on http://localhost:3000. You should see `server running on port 3000` and `connected to SILA database!`.
+The server starts on http://localhost:3000. You should see `server running on port 3000` and `connected to astrohealth database!`.
 
 The default `.env` values work with XAMPP:
 
@@ -78,7 +78,7 @@ DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=
-DB_NAME=SILA
+DB_NAME=astrohealth
 ```
 
 **AI assistant (optional):** to use a real language model, set `AI_API_KEY` (and, if needed, `AI_MODEL` and `AI_API_URL`) in your `.env` file. Never commit this file. Without a key, the assistant answers in **backup mode** (predefined messages).
