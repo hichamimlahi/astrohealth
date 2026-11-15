@@ -86,7 +86,7 @@ export class DashboardAstronaute implements AfterViewInit {
   chatOuvert = false;
   enAttente = signal(false);
   messages = signal<{ auteur: string; texte: string; mode: string }[]>([
-    { auteur: 'assistant', texte: 'Hello! I am the AstroHealth assistant. Ask me about your vital signs or your alerts.', mode: '' }
+    { auteur: 'assistant', texte: 'Hello! I am the SahtHealth assistant. Ask me about your vital signs or your alerts.', mode: '' }
   ]);
 
   private parametres: Parametre[] = [];

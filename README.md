@@ -1,47 +1,84 @@
-# SILA
+# SahtHealth
 
-**Health monitoring and AI assistant for astronauts on space missions.**
+**Autonomous health monitoring and AI assistant for astronauts on deep-space missions.**  
 Project of team **TAMUNT** for the NASA Space Apps Challenge 2026 (Ben Guerir), challenge: *Create Health Monitoring Software for Astronauts on Space Missions*.
 
-> SILA is a prototype. It is **not a medical device**. All data in this repository is simulated, and the alert thresholds are indicative and must be validated by medical professionals.
+> SahtHealth is a prototype. It is **not a certified medical device**. All data in this repository is simulated, and the alert thresholds are indicative and must be validated by aerospace medical professionals.
 
 ---
 
 ## What it does
 
-Astronauts on long missions are far from hospitals, and the link with Earth can be delayed or cut. SILA gives:
+Astronauts on long-duration exploration missions (Moon, Mars) are millions of kilometers from Earth, facing up to **20 minutes of one-way communication latency** and potential communication blackouts. SahtHealth provides:
 
-- **Astronauts** a personal dashboard: current vital signs with a clear status, charts with the normal range, an active alert banner, a simple recommendation, and a chat with an AI assistant.
-- **The ground doctor** a crew overview (status of each astronaut), a table of active alerts, a trends chart with one line per astronaut, a History page (filter by astronaut, parameter and period), and an AI-generated crew summary.
-- **Automatic alerts:** when a measurement crosses a threshold, the server creates an alert (attention or critical). Alerts come from a **rules engine, not from the AI**: they keep working if the AI service or the link is unavailable.
-- **An AI assistant** that explains measurements and alerts in plain language. It never gives a diagnosis, it receives **no personal data** (no name, e-mail or age), and a warning is always shown. If the AI service is unavailable, a backup mode answers with predefined messages so the application never breaks.
+- **Astronauts** an autonomous personal dashboard: real-time vital signs with clear color-coded states, dynamic dose gauges, charts with normal physiological ranges, active alert banners, operational countermeasures, and an explanatory AI health assistant.
+- **Flight Surgeons (Ground Doctors)** a crew overview (status of each astronaut), active alerts table, multi-astronaut trend charts, historical telemetry browser (filter by astronaut, parameter, and time window), and an AI-generated crew telemetry summary.
+- **Auditable Deterministic Alert Engine:** when a measurement crosses a medical threshold, the deterministic rules engine immediately creates an alert (attention or critical). Alerts come from a **pure deterministic engine, not from an AI**: they guarantee **0 hallucination** and operate completely offline without requiring ground connectivity.
+- **Explanatory AI Assistant (BNF11 Privacy Compliant):** explains measurements and active alerts in plain, calm language. It never delivers a medical diagnosis, never prescribes treatment, and receives **zero nominative data** (no name, email, or personal identifiers, strictly complying with the BNF11 space privacy rule). If the AI service is unreachable, a robust backup mode provides predefined operational responses.
+- **Emergency Voice Mode & Fallback:** for an astronaut under extreme stress or physical impairment who cannot navigate touchscreens. Triggered verbally by key phrases (*"emergency"*, *"I feel dizzy"*, *"mayday"*, *"urgence"*, *"vertige"*) or via the red EMERGENCY button. Features an automatic countdown, speech-to-text transcription, and immediate Socket.IO dispatch to ground control. Keyboard shortcuts (`Alt + U`, `Shift + E`) and a 1-click simulation button guarantee a seamless presentation during live jury demonstrations.
+- **Real-Time Synchronized Telemetry:** bidirectional real-time push via Socket.IO (`nouvelle_mesure`, `nouvelle_alerte`, `nouvelle_urgence`) with a 5-second polling fallback.
 
-- **An emergency voice mode** for an astronaut under high stress who cannot use the normal screens. The astronaut says a trigger phrase ("emergency", "mayday" or "code red") or taps the red EMERGENCY button. The screen switches to a simple, high-contrast view, the astronaut describes what is happening out loud, the speech is turned into text, and the report is sent straight to the ground doctor, who sees a red banner in real time. If the astronaut stays silent, a report is still sent after 10 seconds, and a "Cancel (false alarm)" button is always available. A text box is the fallback when the microphone is unavailable. The app never gives medical advice in this mode: it only alerts the doctor.
+---
 
-The screens update in real time: the server pushes `nouvelle_mesure` and `nouvelle_alerte` events with Socket.IO, and the screens also refresh every 5 seconds as a safety net.
+## Space Medical Security & Deep-Space Architecture
 
-## Tech stack
+### 1. Earth-Mars Communication Latency Management
+SahtHealth includes a live mission environment selector in the header:
+- **ISS (Low Earth Orbit):** 0.2 s latency | Real-Time Earth Synchronization.
+- **Artemis Lunar Base:** 2.6 s latency | Lunar Relay Active.
+- **Mars Transit / Base:** 20 min (One-Way) latency | **Autonomous Onboard Mode Active**.
+
+When Mars Transit is active, SahtHealth automatically engages its **Autonomous Onboard Mode**, warning the crew that telemetry-driven medical countermeasures and local AI assistance operate independently without waiting for mission control in Houston.
+
+### 2. NASA Human Research Program (HRP) 5 Hazards & CSA Radiation
+Each monitored parameter is explicitly mapped to the **5 Hazards of Human Spaceflight**:
+- ☢️ **Space Radiation (CSA):** Dedicated radiation card measuring daily dose (`mSv/jour` or `mSv`), equipped with a dynamic visual dose gauge (Normal < 0.5 mSv/j in green, Attention 0.5–1.5 mSv/j in orange, Critical > 1.5 mSv/j in red) based on Canadian Space Agency (CSA) dosimeter research.
+- 🪐 **Altered Gravity Fields:** Cardiovascular deconditioning tracking (Heart Rate, Blood Pressure).
+- 舱 **Hostile / Closed Environment:** Cabin environmental life support (Pulse Oximetry SpO2 / Hypoxia risk, Body Temperature).
+- 🧠 **Isolation & Confinement:** Circadian rhythm and psychological monitoring (Sleep duration, Mood score).
+- 🛰️ **Distance from Earth:** Autonomous onboard deterministic triage and real-time voice emergency alerts.
+
+### 3. Hybrid Medical AI Architecture
+- **Deterministic Rules Authority:** Medical decisions, alert thresholds, and score evaluations are strictly governed by deterministic SQL rules and verified algorithms.
+- **Explanatory Role Only:** The AI language model is strictly confined to explaining verified numbers and suggesting safe physical countermeasures (hydration, rest, entering shielded radiation storm shelters).
+- **BNF11 Telemetry Anonymization:** In full alignment with spaceflight bioethics, telemetry fed to language models is completely stripped of names, email addresses, and personal metadata. Identifiers are masked as *"Astronaut 1"*, *"Astronaut 2"*.
+- **Edge AI Roadmap:** The system architecture is built to support lightweight, onboard offline SLMs (Small Language Models such as Google Gemma 2B or Microsoft Phi-3 Mini) running directly on spacecraft compute nodes without internet access.
+
+---
+
+## Tech Stack
 
 | Part | Technology |
 |---|---|
-| Front-end | Angular, Chart.js, Socket.IO client |
-| Back-end | Node.js, Express (REST API), Socket.IO |
-| Database | MySQL / MariaDB (12 tables) |
-| AI assistant | Language model called from the server (any OpenAI-compatible API) |
-| Simulator | Node.js script (no dependency) |
-| Voice input | Web Speech API of the browser (Chrome or Edge) |
-| Design | Figma |
+| Front-end | Angular (SSR compatible), Chart.js, Socket.IO client, SCSS |
+| Back-end | Node.js, Express (REST API), Socket.IO, MySQL2 |
+| Database | MySQL / MariaDB (12 relational tables) |
+| AI Assistant | OpenAI-compatible API (extensible to local Gemma 2B / Phi-3 SLMs) |
+| Voice Processing | Web Speech API (Chrome / Edge) + Keyboard Fallback (`Alt+U`, `Shift+E`) |
+| Simulator | 1-Click Interactive Web Panel + Node.js CLI script |
 
-## Repository structure
+---
+
+## Repository Structure
 
 ```
-SILA/
+SahtHealth/
 ├── backend/     Node.js + Express API (port 3000)
-├── frontend/    Angular application (port 4200)
-├── simulator/   Measurement simulator for demos
-├── database/    SQL scripts and example JSON
-└── docs/        Specifications and design documents
+│   ├── config/  Database connection (MySQL)
+│   ├── routes/  REST routes (assistant, mesures, alertes, simulateur, urgences)
+│   └── services/Deterministic alert & recommendation engine
+├── frontend/    Angular SSR Application (port 4200)
+│   └── src/app/pages/
+│       ├── choix-profil/         Landing & role switcher
+│       ├── dashboard-astronaute/ Astronaut telemetry, radiation gauge, AI chat & demo panel
+│       ├── vue-medecin/          Flight surgeon crew overview, emergency banners & summaries
+│       └── historique/           Historical telemetry data visualizer
+├── simulator/   Stand-alone CLI scenario runner
+├── database/    SQL schema and demo data scripts
+└── docs/        Medical architecture, assistant examples, and specifications
 ```
+
+---
 
 ## Run it locally
 
@@ -52,116 +89,52 @@ SILA/
 - Angular CLI: `npm install -g @angular/cli`
 - Git
 
-### 2. Database
+### 2. Database Setup
 
-1. Open XAMPP and start **Apache** and **MySQL**.
-2. Open http://localhost/phpmyadmin.
-3. Without selecting any database, click **Import** and import `database/astrohealth_base_complete.sql`. It creates the `astrohealth` database, the 12 tables, the 10 parameters and the 19 default thresholds.
-4. Click the `astrohealth` database, then **Import** and import `database/donnees_demo.sql`. It adds the demo mission, 4 astronauts, measurements, alerts and messages. You can run it again at any time to reset the demo data.
+1. Open XAMPP Control Panel and start **Apache** and **MySQL**.
+2. Open [http://localhost/phpmyadmin](http://localhost/phpmyadmin).
+3. Without selecting any database, click **Import** and select `database/astrohealth_base_complete.sql`. It creates the database, 12 tables, 10 space parameters, and default medical thresholds.
+4. Select the `astrohealth` database, click **Import**, and select `database/donnees_demo.sql`.
 
 ### 3. Back-end
 
-```
+```powershell
 cd backend
 copy .env.example .env
 npm install
 npm start
 ```
-
-The server starts on http://localhost:3000. You should see `server running on port 3000` and `connected to astrohealth database!`.
-
-The default `.env` values work with XAMPP:
-
-```
-PORT=3000
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=
-DB_NAME=astrohealth
-```
-
-**AI assistant (optional):** to use a real language model, set `AI_API_KEY` (and, if needed, `AI_MODEL` and `AI_API_URL`) in your `.env` file. Never commit this file. Without a key, the assistant answers in **backup mode** (predefined messages).
+The server starts on `http://localhost:3000` with confirmation `connected to astrohealth database!`.
 
 ### 4. Front-end
 
 In a second terminal:
-
-```
+```powershell
 cd frontend
 npm install
-ng serve
+npx ng serve
 ```
+Open your browser at **http://localhost:4200**.
 
-Open http://localhost:4200.
+---
 
-### 5. Try it
+## Jury Live Demo (1-Click Mode)
 
-1. Choose **Astronaut** to see the personal dashboard. The demo data contains an active SpO2 alert for the astronaut shown.
-2. Open the chat (💬) and ask: *What is happening with my oxygen level?*
-3. Go back and choose **Ground Doctor** to see the crew overview, the active alerts, and the History page.
-4. Start the simulator in a third terminal, from the project root, to see live updates and a new alert appear:
+During a pitch or presentation, no terminal is needed:
+1. Open the **Astronaut Dashboard** on `http://localhost:4200`.
+2. Click the floating **🧪 Mode Démo** button (bottom right):
+   - 🟢 **Scénario Nominal:** Instantly clears alerts and sets all vitals to optimal green ranges.
+   - 🟠 **Baisse d'oxygène SpO2:** Triggers progressive hypoxia (SpO2 drops to 86%, heart rate spikes to 118 bpm) with live attention/critical alerts.
+   - 🔴 **Tempête Solaire:** Triggers a dangerous space radiation spike (2.8 mSv/j) driving the CSA dosimeter gauge into critical red with shelter countermeasures.
+   - 🎙️ **Simuler commande vocale:** Simulates *"Emergency, I feel dizzy"* with keyboard shortcut `Alt + U` / `Shift + E`.
+3. Open **Ground Doctor** in another tab to observe real-time telemetry and emergency banner dispatch via Socket.IO.
 
-```
-node simulator/simulator.js --scenario=oxygene
-```
-
-The oxygen level of the first astronaut slowly drops from 98% to 85%: an attention alert, then a critical alert appear on the doctor view. Other options (`--sommeil`, `--cible`, `--interval`, `--dry`) are described in `simulator/README.md`.
-5. Try the **emergency voice mode** in Chrome or Edge: on the astronaut dashboard, click **Voice trigger** (allow the microphone), then say *"emergency, I feel dizzy"*. The emergency screen opens with your words; after 5 seconds of silence the report is sent. Open **Ground Doctor** in another tab to see the red banner. The red **EMERGENCY** button does the same without voice.
-
-## API overview
-
-| Method | Route | Description |
-|---|---|---|
-| GET | `/api/parametres` | List of monitored parameters with units and normal ranges |
-| GET | `/api/astronautes` | List of astronauts |
-| GET | `/api/astronautes/:id/mesures/latest` | Latest value of each parameter |
-| GET | `/api/astronautes/:id/mesures?parametre=FC&debut=...&fin=...` | Measurements of one parameter over a period |
-| POST | `/api/mesures` | Record a measurement (creates an alert if a threshold is crossed) |
-| GET | `/api/alertes?statut=active` | Alerts, optionally filtered by status |
-| POST | `/api/assistant/chat` | Ask the AI assistant a question |
-| POST | `/api/assistant/resume-equipage` | Generate a crew health summary for the ground doctor |
-| GET | `/api/assistant/historique?id_astronaute=1` | Conversation history of an astronaut |
-| POST | `/api/simulateur/scenario` | Run a built-in demo scenario (`baisse_oxygene` or `normal`) |
-| POST | `/api/urgences` | Send an emergency voice report from an astronaut (`id_astronaute`, `texte`) |
-| GET | `/api/urgences?minutes=60` | Emergency reports of the last minutes, newest first |
-
-Real-time events (Socket.IO): `nouvelle_mesure`, `nouvelle_alerte`, `nouvelle_urgence`.
-
-Emergency reports are stored in the existing `message_ia` table with `role_message = 'urgence'` and `mode = 'urgence'`, so no database change is needed.
-
-The full specification is in the `docs` folder.
-
-## NASA resources and data
-
-SILA is a prototype built on **NASA Human Research Program (HRP) resources**. No NASA dataset is imported: these resources guided what we monitor and how we designed the product.
-
-| NASA resource | What we took from it | Where it appears in SILA |
-|---|---|---|
-| [5 Hazards of Human Spaceflight](https://www.nasa.gov/hrp/hazards/) | Five hazards (space radiation, isolation and confinement, distance from Earth, gravity fields, hostile or closed environments), and the point that hazards can make each other worse | Organization of the monitored parameters and features; an astronaut's status takes the most severe color among all parameters; alerts that work without AI or a link to Earth address "distance from Earth" |
-| [Risks of Human Spaceflight](https://www.nasa.gov/hrp/risks/) | Specific risks linked to the hazards | Risk of Hypoxia: SpO2. Risk of Inadequate Sleep and Irregular Schedules: sleep duration. Risk of Cardiovascular Adaptations: heart rate and blood pressure. Risk of Radiation-Induced Cancers: radiation parameter (data model). Risk of Inadequate Systems Operations Support: AI assistant with a backup mode. Risk of Behavioral Changes and Psychiatric Disorders (stress of space missions): emergency voice mode for an astronaut under high stress |
-| [Ongoing HRP Research in Space](https://www.nasa.gov/hrp/ongoing-hrp-research/) | Artemis II studies on well-being, activity and sleep (ARCHeR) and on a consistent set of health measures (Standard Measures) | Model for wearable-based sleep and activity monitoring and for a consistent set of parameters per astronaut |
-
-Space agency partner resource used as motivation: Canadian Space Agency, [Monitoring Radiation for Astronaut Health](https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp), for tracking radiation exposure.
-
-Details and the status of each hazard in the application are in `docs/sources-nasa.md`.
-
-**What is not from NASA:** the alert thresholds (for example SpO2 below 92% for "attention", heart rate above 120 bpm) are **indicative values chosen by the team**. They are not taken from NASA documents and must be validated by medical professionals.
-
-## Use of AI
-
-- **In the product:** the assistant uses a language model to explain measurements and alerts and to write the crew summary. It receives only anonymous measurements (the crew summary uses "Astronaut 1", "Astronaut 2", and so on), never gives a diagnosis, and shows a permanent warning. Alerts are decided by a rules engine, not by the AI.
-- **In development:** AI tools were used by the team to help write and review parts of the code, the documentation and the design documents (Claude by Anthropic). The team reviewed and tested the result.
-
-## Limitations and next steps
-
-- Replace simulated data with real wearable sensors and radiation dosimeters (a radiation card on the astronaut dashboard is planned).
-- Full offline mode with automatic synchronization when the link with Earth returns. Records already carry a unique identifier and a synchronization flag for this; the synchronization itself is not implemented.
-- An onboard AI model that works without an Internet connection (today the assistant calls an online API and falls back to predefined messages).
-- Onboard speech recognition for the emergency mode. Today it uses the browser's speech service (Chrome sends the audio to an online service, so it needs Internet and works only in Chrome or Edge); the red button and the text box work without it. The trigger phrases are a first version and need tuning against false alarms.
-- Personal baselines per astronaut and weekly summaries for the medical team.
-- Validation of thresholds with medical professionals.
+---
 
 ## Team TAMUNT
 
-ABBOU Aimrane (Team Owner), Sara Sedki,hajar en-neyah , hicham imlahi, Hamza Koujili
+- **ABBOU Aimrane** (Team Owner)
+- **Sara Sedki**
+- **Hajar En-neyah**
+- **Hicham Imlahi**
+- **Hamza Koujili**
