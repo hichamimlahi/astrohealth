@@ -172,6 +172,16 @@
             <span>Pic critique CSA (Radiation 2.8 mSv/j)</span>
           </div>
         </button>
+
+        <div class="separation-demo"></div>
+
+        <button class="btn-scenario btn-urgence" (click)="simulerUrgenceVocale()" title="Simuler l'alerte vocale en cas de bruit ambiant">
+          <span class="pastille-etat">🎙️</span>
+          <div class="scenario-details">
+            <strong>Simuler commande vocale</strong>
+            <span>"Emergency, I feel dizzy" (Alt+U / Shift+E)</span>
+          </div>
+        </button>
       </div>
 
       @if (chargementScenario()) {

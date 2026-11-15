@@ -553,6 +553,12 @@ nav a.actif {
     gap: 8px;
   }
 
+  .separation-demo {
+    height: 1px;
+    background: var(--bordure);
+    margin: 4px 0;
+  }
+
   .btn-scenario {
     width: 100%;
     display: flex;
@@ -605,6 +611,20 @@ nav a.actif {
     &.btn-solar:hover:not(:disabled) {
       border-color: var(--rouge);
       background: rgba(239, 68, 68, 0.08);
+    }
+
+    &.btn-urgence {
+      border-color: rgba(239, 68, 68, 0.4);
+      background: rgba(239, 68, 68, 0.08);
+
+      &:hover:not(:disabled) {
+        border-color: var(--rouge);
+        background: rgba(239, 68, 68, 0.16);
+      }
+
+      strong {
+        color: #fca5a5;
+      }
     }
 
     &:disabled {

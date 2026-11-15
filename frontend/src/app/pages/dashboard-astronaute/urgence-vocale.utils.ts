@@ -1,8 +1,18 @@
 // Voice trigger helpers (pure functions, easy to test)
 
-// Phrases that open emergency mode. We avoid the single word "alert",
-// because it is also used in normal speech ("my alert is active").
-export const PHRASES_DECLENCHEUR = ['emergency', 'mayday', 'code red'];
+// Mots-clés en anglais et français déclenchant l'état d'urgence
+export const PHRASES_DECLENCHEUR = [
+  'emergency',
+  'i feel dizzy',
+  'feel dizzy',
+  'dizzy',
+  'help',
+  'mayday',
+  'code red',
+  'urgence',
+  'vertige',
+  'au secours'
+];
 
 export const TEXTE_PAR_DEFAUT =
   'Emergency triggered by the astronaut. No voice description was captured.';
@@ -33,7 +43,13 @@ export function construireTranscription(resultats: string[], indexDeclencheur: n
     if (i === indexDeclencheur && !manuel) {
       const pos = positionApresDeclencheur(t);
       if (pos >= 0) {
-        t = t.slice(pos);
+        const reste = t.slice(pos).replace(/^[\s,.:;!-]+/, '').trim();
+        // Si la phrase contient un symptôme clé comme "dizzy" ou "vertige", on préserve l'énoncé complet
+        if (t.toLowerCase().includes('dizzy') || t.toLowerCase().includes('vertige') || reste.length === 0) {
+          t = t.trim();
+        } else {
+          t = reste;
+        }
       }
     }
     texte += ' ' + t;

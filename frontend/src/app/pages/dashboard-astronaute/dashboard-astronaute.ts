@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, ViewChild, AfterViewInit, PLATFORM_ID, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, ViewChild, HostListener, AfterViewInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -103,6 +103,31 @@ export class DashboardAstronaute implements AfterViewInit {
 
   @ViewChild('graphiqueFc') graphiqueFc!: ElementRef<HTMLCanvasElement>;
   @ViewChild('graphiqueSpo2') graphiqueSpo2!: ElementRef<HTMLCanvasElement>;
+  @ViewChild(Urgence) composantUrgence?: Urgence;
+
+  @HostListener('window:keydown', ['$event'])
+  surToucheClavier(event: KeyboardEvent) {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    const estAltU = event.altKey && (event.key === 'u' || event.key === 'U');
+    const estShiftE = event.shiftKey && (event.key === 'e' || event.key === 'E') && !event.ctrlKey && !event.altKey;
+
+    if (estAltU || estShiftE) {
+      const tag = (event.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea') {
+        return;
+      }
+      event.preventDefault();
+      this.simulerUrgenceVocale();
+    }
+  }
+
+  simulerUrgenceVocale(phrase = 'Emergency, I feel dizzy') {
+    if (this.composantUrgence) {
+      this.composantUrgence.simulerDeclenchementVocal(phrase);
+    }
+  }
 
   ngAfterViewInit() {
     if (!isPlatformBrowser(this.platformId)) {

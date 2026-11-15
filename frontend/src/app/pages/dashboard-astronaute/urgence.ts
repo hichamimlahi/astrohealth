@@ -19,7 +19,7 @@ type EtatUrgence = 'inactif' | 'ecoute' | 'envoi' | 'envoye' | 'erreur';
         🎙 Voice trigger: {{ veilleActive() ? 'ON' : 'OFF' }}
       </button>
       @if (veilleActive()) {
-        <span class="aide">Say "emergency" or "mayday"</span>
+        <span class="aide">Say "emergency", "I feel dizzy" or "urgence"</span>
       }
       @if (erreurMicro()) {
         <span class="aide erreur">{{ erreurMicro() }}</span>
@@ -158,6 +158,16 @@ export class Urgence implements OnDestroy {
     this.arreterReco();
     this.ouvrirUrgence();
     this.demarrerSession();
+  }
+
+  simulerDeclenchementVocal(phrase = 'Emergency, I feel dizzy') {
+    this.manuel = false;
+    this.indexDeclencheur = 0;
+    this.texteAvant = '';
+    this.arreterReco();
+    this.ouvrirUrgence();
+    this.transcription.set(phrase);
+    this.relancerMinuteur();
   }
 
   private ouvrirUrgence() {
