@@ -30,21 +30,6 @@ All resources below are listed on the challenge page of the NASA Space Apps Chal
 
 ---
 
-## 3. Values that are NOT from NASA
 
-The alert thresholds (for example SpO2 below 92% for "attention", heart rate above 120 bpm) are **indicative values chosen by the team**. They are not taken from NASA documents and must be validated by medical professionals. Do not present them as NASA values.
 
----
 
-## 4. Text ready to paste in the submission form (adapt to what is true on submission day)
-
-> SILA's monitored parameters and design choices are organized around NASA's Human Research Program framework of the five hazards of human spaceflight (space radiation, isolation and confinement, distance from Earth, gravity fields, and closed or hostile environments). We also used the Canadian Space Agency's work on continuous radiation monitoring as motivation for tracking radiation exposure. Our measurements are simulated and our alert thresholds are indicative values chosen by the team; no real astronaut data is used. A future version would connect real wearable sensors and radiation dosimeters.
-
----
-
-## 5. Possible next steps
-
-- Read resources 3 to 5 and complete the **[TO REVIEW]** rows.
-- Add a radiation card to the astronaut dashboard and make the simulator send `RADIATION` values.
-- Add a small "NASA hazards" panel in the application, showing the five hazards and the SILA feature that addresses each one.
-- Optional, longer term: explore NASA's Open Science Data Repository (https://osdr.nasa.gov) for human biological datasets.
