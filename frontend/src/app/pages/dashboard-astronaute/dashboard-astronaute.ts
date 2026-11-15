@@ -20,6 +20,14 @@ interface CarteMesure {
   pourcentageJauge?: number;
 }
 
+export interface EnvironnementMission {
+  id: 'iss' | 'lune' | 'mars';
+  nom: string;
+  latence: string;
+  statut: string;
+  icone: string;
+}
+
 @Component({
   selector: 'app-dashboard-astronaute',
   imports: [RouterLink, Urgence],
@@ -35,6 +43,32 @@ export class DashboardAstronaute implements AfterViewInit {
   idAstronaute = 1;
   mission = 'Artemis-X';
   jour = 42;
+
+  readonly environnements: EnvironnementMission[] = [
+    {
+      id: 'iss',
+      nom: 'ISS (Orbite Basse)',
+      latence: '0.2 s',
+      statut: 'Synchronisation Temps Réel avec la Terre',
+      icone: '🛰️'
+    },
+    {
+      id: 'lune',
+      nom: 'Base Lunaire Artemis',
+      latence: '2.6 s',
+      statut: 'Relais Lunaire Actif',
+      icone: '🌕'
+    },
+    {
+      id: 'mars',
+      nom: 'Transit / Base Mars',
+      latence: '20 min (One-Way)',
+      statut: 'Mode Autonome Embarqué Actif',
+      icone: '🔴'
+    }
+  ];
+
+  environnementActif = signal<EnvironnementMission>(this.environnements[0]);
 
   nom = signal('');
   cartes = signal<CarteMesure[]>([]);
@@ -70,9 +104,40 @@ export class DashboardAstronaute implements AfterViewInit {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
+    this.initialiserEnvironnement();
     this.graphFc = this.creerGraphique(this.graphiqueFc, 'Heart rate (bpm)', 40, 120);
     this.graphSpo2 = this.creerGraphique(this.graphiqueSpo2, 'SpO2 (%)', 85, 100);
     this.demarrerChargement();
+  }
+
+  initialiserEnvironnement() {
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        const saved = localStorage.getItem('sahthealth_mission_env') || localStorage.getItem('sila_mission_env');
+        if (saved) {
+          const trouve = this.environnements.find(e => e.id === saved);
+          if (trouve) {
+            this.environnementActif.set(trouve);
+          }
+        }
+      } catch (e) {
+        console.warn('Storage inaccessible:', e);
+      }
+    }
+  }
+
+  changerEnvironnement(id: string) {
+    const cible = this.environnements.find(e => e.id === id);
+    if (cible) {
+      this.environnementActif.set(cible);
+      if (isPlatformBrowser(this.platformId)) {
+        try {
+          localStorage.setItem('sahthealth_mission_env', cible.id);
+        } catch (e) {
+          console.warn('Storage inaccessible:', e);
+        }
+      }
+    }
   }
 
     demarrerChargement() {

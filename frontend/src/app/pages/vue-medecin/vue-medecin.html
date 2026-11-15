@@ -21,7 +21,19 @@
     <header class="barre">
       <div>
         <h1>Crew Overview</h1>
-        <p class="sous-titre">Mission {{ mission }} - Day {{ jour }}</p>
+        <div class="mission-ligne">
+          <span class="sous-titre">Mission {{ mission }} - Day {{ jour }}</span>
+          <div class="selecteur-env-medecin">
+            <select [value]="environnementActif().id" (change)="changerEnvironnement($any($event.target).value)">
+              @for (env of environnements; track env.id) {
+                <option [value]="env.id">{{ env.icone }} {{ env.nom }}</option>
+              }
+            </select>
+            <span class="badge-latence-medecin" [class.mars]="environnementActif().id === 'mars'" title="Latence de communication Terre-Vaisseau">
+              ⏱️ Latence : <strong>{{ environnementActif().latence }}</strong> | {{ environnementActif().statut }}
+            </span>
+          </div>
+        </div>
       </div>
       <div class="infos">
         <span>
@@ -33,6 +45,12 @@
         <button class="bouton-resume" (click)="ouvrirFermerResume()">Crew summary</button>
       </div>
     </header>
+
+    @if (environnementActif().id === 'mars') {
+      <div class="bandeau-mars-medecin">
+        🛰️ <strong>Liaison Espace Profond (Transit / Base Mars) :</strong> Latence de communication aller de 20 min. L'équipage et SahtHealth opèrent en mode autonome embarqué.
+      </div>
+    }
 
     @for (u of urgencesVisibles(); track u.id_message) {
       <div class="bandeau-urgence" role="alert">

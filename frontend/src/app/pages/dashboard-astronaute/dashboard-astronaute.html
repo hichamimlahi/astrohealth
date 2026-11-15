@@ -19,7 +19,28 @@
 
   <main class="contenu">
     <header class="barre">
-      <h1>My Health</h1>
+      <div class="titre-zone">
+        <h1>My Health</h1>
+        <div class="selecteur-mission">
+          <label for="select-env" class="select-label">Environnement :</label>
+          <div class="select-wrapper">
+            <select id="select-env" [value]="environnementActif().id" (change)="changerEnvironnement($any($event.target).value)">
+              @for (env of environnements; track env.id) {
+                <option [value]="env.id">{{ env.icone }} {{ env.nom }}</option>
+              }
+            </select>
+          </div>
+          <div class="metriques-liaison" [class.mars]="environnementActif().id === 'mars'">
+            <span class="badge-latence" title="Latence de transmission aller vers la Terre">
+              ⏱️ Latence : <strong>{{ environnementActif().latence }}</strong>
+            </span>
+            <span class="badge-statut" title="Statut de la liaison Terre">
+              {{ environnementActif().statut }}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <div class="infos">
         <span>Day {{ jour }}</span>
         <span>
@@ -30,6 +51,18 @@
         <span class="maj">Last update: {{ derniereMaj() }}</span>
       </div>
     </header>
+
+    @if (environnementActif().id === 'mars') {
+      <div class="bandeau-mars">
+        <div class="bandeau-mars-icone">⚠️</div>
+        <div class="bandeau-mars-texte">
+          <strong>Latence Terre-Mars : 20 min.</strong> En cas d'anomalie, le moteur déterministe embarqué SahtHealth et l'Assistant IA local assurent la prise en charge immédiate sans attendre Houston.
+        </div>
+        <div class="bandeau-mars-badge">
+          MODE AUTONOME EMBARQUÉ
+        </div>
+      </div>
+    }
 
     @if (alerteActive(); as alerte) {
       <div [class]="'bandeau ' + alerte.niveau">
