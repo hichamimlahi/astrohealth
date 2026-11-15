@@ -16,3 +16,21 @@ body {
   color: var(--texte);
   font-family: Inter, Arial, sans-serif;
 }
+
+.logo-titre-sidebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .logo-sidebar {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    object-fit: cover;
+  }
+
+  h2 {
+    margin: 0;
+  }
+}

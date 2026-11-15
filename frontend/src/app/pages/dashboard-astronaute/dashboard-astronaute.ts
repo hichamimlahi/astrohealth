@@ -753,7 +753,7 @@ export class DashboardAstronaute implements AfterViewInit {
       antialias: true,
       powerPreference: 'high-performance'
     });
-    this.renderer.setSize(width, height);
+    this.renderer.setSize(width, height, false);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
     const ambientLight = new THREE.AmbientLight(0x06b6d4, 1.2);
@@ -849,7 +849,7 @@ export class DashboardAstronaute implements AfterViewInit {
       const h = container.clientHeight;
       this.camera.aspect = w / h;
       this.camera.updateProjectionMatrix();
-      this.renderer.setSize(w, h);
+      this.renderer.setSize(w, h, false);
     };
     window.addEventListener('resize', redimensionner);
     this.destroyRef.onDestroy(() => {
